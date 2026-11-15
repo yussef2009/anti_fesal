@@ -1,0 +1,1434 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>آنتي فصال (Anti-Fesal) — سعّر، بيع، ومن غير وجع فصال | الإسكندرية</title>
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="icon" type="image/png" href="/logo.png">
+</head>
+<body>
+
+  <!-- Top Sticky Header (Dubizzle Inspired) -->
+  <header class="site-header">
+    <div class="header-top">
+      <!-- Logo Section (Shortcut to Showroom Home) -->
+      <div class="brand-section" onclick="switchPortalView('showroom')" style="cursor: pointer;" title="الصفحة الرئيسية — المعرض المعتمد">
+        <img src="/logo.png" alt="Anti-Fesal Logo" class="brand-logo-img">
+      </div>
+
+      <!-- Search & Alexandria District Selector (Hidden until clicked via Animate UI) -->
+      <div class="header-search-wrapper">
+        <button id="btnSearchTrigger" class="search-trigger-btn" title="فتح البحث الفوري">
+          🔍
+        </button>
+        <div id="headerSearchBar" class="header-search-bar collapsed">
+          <select id="headerDistrictFilter" class="district-selector">
+            <option value="All">كل الإسكندرية 📍</option>
+            <option value="El-Attarine">العطارين (El-Attarine)</option>
+            <option value="El-Mansheya">المنشية (El-Mansheya)</option>
+            <option value="Sidi Beshr">سيدي بشر (Sidi Beshr)</option>
+            <option value="Moharam Bek">محرم بك (Moharam Bek)</option>
+            <option value="Smouha">سموحة (Smouha)</option>
+            <option value="Miami">ميامي (Miami)</option>
+            <option value="Loran">لوران (Loran)</option>
+            <option value="Gleem">جليم (Gleem)</option>
+            <option value="Roushdy">رشدي (Roushdy)</option>
+          </select>
+          <input type="text" id="headerSearchInput" class="search-input" placeholder="ابحث عن أجهزة كهربائية، لابتوبات، صالونات العطارين...">
+          <button id="headerSearchBtn" class="search-btn" title="بحث">🔍</button>
+          <button id="btnSearchClose" class="btn-search-close" title="إغلاق">✕</button>
+        </div>
+      </div>
+
+      <!-- Header Actions: Lang, Dark Mode, Account, Dev Roles, Sell CTA -->
+      <div class="header-actions">
+        <!-- Language Switcher -->
+        <button id="btnLangToggle" class="header-util-btn" title="تبديل اللغة / Switch Language">
+          <span>🌐</span> <span id="txtLangCode">English</span>
+        </button>
+
+        <!-- Dark Mode Switcher -->
+        <button id="btnThemeToggle" class="header-util-btn" title="الوضع الليلي / Dark Mode">
+          <span id="txtThemeIcon">🌙</span>
+        </button>
+
+        <!-- Account Profile Button -->
+        <button id="btnHeaderAccount" class="header-util-btn" title="حسابي / Account Profile">
+          <span>👤</span> <span id="txtHeaderAccountLabel">حسابي</span>
+        </button>
+
+        <div class="role-switcher" title="مبدّل الأدوار التجريبي الفوري (Dev Role Switcher)">
+          <span class="role-label" id="txtRoleLabel">الدور:</span>
+          <button class="role-btn" data-role="seller">بائع</button>
+          <button class="role-btn active" data-role="merchant">تاجر</button>
+          <button class="role-btn" data-role="driver">مندوب</button>
+        </div>
+
+        <button id="btnHeaderSellCta" class="btn-crimson-cta">
+          <span>+</span>
+          <span id="txtHeaderSellCta">سعّر وبِع بالذكاء الاصطناعي</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Application Body -->
+  <main class="app-container">
+
+    <!-- ==================== VIEW 1: VERIFIED SHOWROOM ==================== -->
+    <section id="viewShowroom" class="portal-view active">
+      <div class="feed-header">
+        <div class="category-chips">
+          <button class="category-chip active" data-cat="All" id="chipCatAll">الكل 🏷️</button>
+          <button class="category-chip" data-cat="Appliances" id="chipCatAppliances">أجهزة منزلية ❄️</button>
+          <button class="category-chip" data-cat="Electronics" id="chipCatElectronics">إلكترونيات وشاشات 💻</button>
+          <button class="category-chip" data-cat="Furniture" id="chipCatFurniture">أثاث العطارين 🛋️</button>
+        </div>
+        <div class="feed-stats-pill" id="feedItemsCounter">
+          جاري تحميل المعروضات المعتمدة...
+        </div>
+      </div>
+
+      <!-- Live Product List View (Horizontal List with Lazy Loading) -->
+      <div id="productGrid" class="product-list-view">
+        <!-- Rendered dynamically as sleek list items by app.js -->
+      </div>
+
+      <!-- Scroll Sentinel for Infinite / Chunked Lazy Loading -->
+      <div id="showroomScrollSentinel" class="scroll-sentinel">
+        <span class="lazy-load-indicator" id="lazyIndicator" style="display: none;">
+          ⚡ جاري تحميل دفعة السلع التالية...
+        </span>
+      </div>
+    </section>
+
+    <!-- ==================== VIEW 2: SELLER AI APPRAISAL ==================== -->
+    <section id="viewSeller" class="portal-view">
+      <div class="seller-grid">
+        <!-- Intake Form Card -->
+        <div class="intake-card">
+          <div class="intake-card-header">
+            <h2 class="intake-card-title">⚡ فحص وتثمين المنتج بالذكاء الاصطناعي</h2>
+            <p class="intake-card-subtitle">ارفع صور جهازك واكتب تفاصيله — خلال ثوانٍ سيتم فحص العيوب، وتحديد الدرجة، وتسعيره فورياً بدون أي فصال.</p>
+          </div>
+
+          <form id="sellerIntakeForm">
+            <div class="form-group">
+              <label class="form-label">عنوان السلعة والموديل *</label>
+              <input type="text" id="sellerTitle" class="form-input-full" placeholder="مثال: تلاجة توشيبا 16 قدم نوفروست فضي" required>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">القسم *</label>
+                <select id="sellerCategory" class="form-input-full" required>
+                  <option value="Appliances">أجهزة منزلية (Appliances)</option>
+                  <option value="Electronics">إلكترونيات (Electronics)</option>
+                  <option value="Furniture">أثاث وموبيليات (Furniture)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">منطقة الاستلام بالإسكندرية *</label>
+                <select id="sellerDistrict" class="form-input-full" required>
+                  <option value="Sidi Beshr">سيدي بشر</option>
+                  <option value="El-Attarine">العطارين</option>
+                  <option value="El-Mansheya">المنشية</option>
+                  <option value="Moharam Bek">محرم بك</option>
+                  <option value="Smouha">سموحة</option>
+                  <option value="Miami">ميامي</option>
+                  <option value="Loran">لوران</option>
+                  <option value="Gleem">جليم</option>
+                  <option value="Roushdy">رشدي</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">رقم الهاتف للتواصل *</label>
+                <input type="tel" id="sellerPhone" class="form-input-full" placeholder="01012345678" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">باقة البائع *</label>
+                <select id="sellerTier" class="form-input-full">
+                  <option value="Everyday Seller">بائع عادي (عمولة 8% كاش فوري)</option>
+                  <option value="Pro Trader">تاجر محترف (عمولة 5%)</option>
+                  <option value="Enterprise">معرض / ورشة (عمولة 3%)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">صور المنتج (1 إلى 4 صور)</label>
+              <div class="photo-uploader-box" id="dropZone">
+                <div class="uploader-icon">📷</div>
+                <div style="font-weight: 700; font-size: 14px;">اضغط هنا لرفع صور واضحة للمنتج</div>
+                <div style="font-size: 12px; color: #64748B; margin-top: 4px;">يتم حفظها في Appwrite Cloud Storage أو التخزين المحلي الآمن</div>
+                <input type="file" id="photoFileInput" accept="image/*" multiple style="display: none;">
+              </div>
+              <div id="previewGrid" class="preview-grid"></div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">وصف الحالة بالعامية المصرية *</label>
+              <textarea id="sellerDesc" class="form-input-full" rows="4" placeholder="اكتب كل التفاصيل بأمانة: مدة الاستخدام، هل فيه خدوش، هل اتعمله صيانة قبل كده، كرتونته وفواتيره موجودة ولا لأ..." required></textarea>
+            </div>
+
+            <button type="submit" id="btnSubmitAppraisal" class="btn-crimson-cta" style="width: 100%; justify-content: center; padding: 14px; font-size: 16px;">
+              <span>⚡ ابدأ الفحص والتسعير الفوري</span>
+            </button>
+          </form>
+        </div>
+
+        <!-- Live Appraisal Receipt Card -->
+        <div class="receipt-card" id="appraisalReceipt" style="display: none;">
+          <div class="receipt-header">
+            <div>
+              <div style="font-size: 12px; color: #64748B; font-weight: 700;">تقرير الفحص والتسعير الفوري</div>
+              <h3 id="receiptTitle" style="font-size: 18px; font-weight: 800; margin-top: 2px;">تلاجة توشيبا 16 قدم نوفروست</h3>
+            </div>
+            <div id="receiptStatusBadge" class="receipt-status-pill auto-approved">
+              ✓ معتمد آلياً
+            </div>
+          </div>
+
+          <div class="receipt-row">
+            <span>القسم والموديل المكتشف:</span>
+            <strong id="receiptCategoryModel">Appliances — Toshiba 16ft</strong>
+          </div>
+          <div class="receipt-row">
+            <span>درجة الحالة المعيارية (Grade):</span>
+            <strong id="receiptGrade">الفئة A (كسر زيرو)</strong>
+          </div>
+          <div class="receipt-row">
+            <span>نسبة ثقة الذكاء الاصطناعي:</span>
+            <strong id="receiptConfidence" style="font-family: var(--font-mono);">94%</strong>
+          </div>
+          <div class="receipt-row">
+            <span>العيوب المرصودة:</span>
+            <span id="receiptDefects" style="color: #64748B;">لا توجد عيوب تذكر</span>
+          </div>
+          <div class="receipt-row">
+            <span>سعر البيع النهائي العادل (Resale):</span>
+            <strong id="receiptResalePrice" style="color: var(--crimson-primary); font-size: 18px;">14,500 ج.م</strong>
+          </div>
+          <div class="receipt-row">
+            <span>عمولة المنصة المحجوزة:</span>
+            <span id="receiptCommission">8% (1,160 ج.م)</span>
+          </div>
+
+          <!-- Highlight Payout Row -->
+          <div class="receipt-row highlight">
+            <div>
+              <div style="font-size: 13px; font-weight: 700; color: #047857;">مبلغ الشراء الكاش الفوري (عرض الشراء):</div>
+              <div style="font-size: 11px; color: #64748B;">يدفعه لك المندوب كاش في يدك لحظة الاستلام من باب بيتك</div>
+            </div>
+            <div class="payout-big-price" id="receiptInstantPayout">10,440 ج.م</div>
+          </div>
+
+          <!-- Decision CTA -->
+          <div id="receiptActionArea">
+            <button id="btnAcceptQuote" class="btn-accept-dispatch">
+              <span>🚚 قبول العرض واستدعاء مندوب الاستلام الفوري</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== VIEW 3: MERCHANT REVIEW (HITL) ==================== -->
+    <section id="viewMerchant" class="portal-view">
+      <!-- 4 KPI Cards -->
+      <div class="kpi-row">
+        <div class="kpi-card">
+          <div class="kpi-label">إجمالي المعروضات بالإسكندرية</div>
+          <div class="kpi-value" id="kpiTotalItems">0</div>
+          <div class="kpi-sub">شامل كافة الأقسام النشطة</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">نسبة الاعتماد الآلي (Auto-Approval)</div>
+          <div class="kpi-value" id="kpiAutoApprovalRate" style="color: var(--grade-emerald);">0%</div>
+          <div class="kpi-sub">المعيار المستهدف: &gt;= 70%</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">قائمة الانتظار والمراجعة البشرية (&lt;0.80)</div>
+          <div class="kpi-value" id="kpiPendingCount" style="color: var(--grade-amber);">0</div>
+          <div class="kpi-sub">بند بحاجة لمراجعة التاجر (HITL)</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">إجمالي العمولات المحجوزة</div>
+          <div class="kpi-value" id="kpiLockedCommission" style="color: var(--crimson-primary);">0 ج.م</div>
+          <div class="kpi-sub">أرباح وساطة مؤكدة</div>
+        </div>
+      </div>
+
+      <!-- Pending Items Review Queue -->
+      <div class="dashboard-section">
+        <div class="section-title-bar">
+          <div>
+            <h2 class="section-title">🛡️ طابور المراجعة البشرية (HITL Triage Queue)</h2>
+            <p style="font-size: 13px; color: #64748B;">سلع انخفضت نسبة ثقة فحصها عن 80% بسبب صور غير واضحة أو عيوب غير محددة بدقة.</p>
+          </div>
+          <button id="btnRefreshMerchantQueue" class="btn-quick-prompt">تحديث القائمة 🔄</button>
+        </div>
+
+        <div class="data-table-wrapper">
+          <table class="custom-table" id="tableMerchantQueue">
+            <thead>
+              <tr>
+                <th>كود السلعة</th>
+                <th>العنوان والموديل</th>
+                <th>المنطقة</th>
+                <th>الفئة المقترحة</th>
+                <th>درجة الثقة</th>
+                <th>العيوب المرصودة</th>
+                <th>السعر المقترح</th>
+                <th>إجراءات التاجر</th>
+              </tr>
+            </thead>
+            <tbody id="tbodyMerchantQueue">
+              <!-- Rendered dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== VIEW 4: TRADER MARKETING & AUTOREPLY ==================== -->
+    <section id="viewTraderStudio" class="portal-view">
+      <!-- 3 Subscription Tiers -->
+      <div class="section-title-bar" style="margin-bottom: 16px;">
+        <div>
+          <h2 class="section-title">💎 باقات اشتراك التجار والورش</h2>
+          <p style="font-size: 13px; color: #64748B;">وفر عمولتك وافتح أدوات الأتمتة المتقدمة للربط مع متجرك على مدار الساعة.</p>
+        </div>
+      </div>
+
+      <div class="subscription-tiers-grid">
+        <!-- Tier 1 -->
+        <div class="tier-card">
+          <div class="tier-name">البائع العادي (Everyday Seller)</div>
+          <div class="tier-price">مجاني</div>
+          <div class="tier-commission-rate">عمولة 8% لكل عملية بيع ناجحة</div>
+          <ul class="tier-features">
+            <li>✓ فحص فوري بالذكاء الاصطناعي</li>
+            <li>✓ تسليم كاش فوري عند باب البيت</li>
+            <li>✓ ضمان معاينة المندوب 100%</li>
+            <li>✓ دعم فني عبر الواتساب</li>
+          </ul>
+          <button class="btn-quick-prompt" style="width: 100%; padding: 10px;">الباقة الافتراضية المفعلة</button>
+        </div>
+
+        <!-- Tier 2 -->
+        <div class="tier-card featured">
+          <div class="tier-tag">الأكثر طلباً للتجار</div>
+          <div class="tier-name">التاجر المحترف (Pro Trader)</div>
+          <div class="tier-price">499 <span style="font-size: 16px;">ج.م / شهرياً</span></div>
+          <div class="tier-commission-rate">عمولة مخفضة 5% فقط</div>
+          <ul class="tier-features">
+            <li>✓ جميع مزايا الباقة العادية</li>
+            <li>✓ توليد منشورات إعلانية تلقائية لفيسبوك وإنستجرام</li>
+            <li>✓ بوت رد آلي ضد الفصال 24/7</li>
+            <li>✓ تطبيق قاعدة الخصم التلقائي للمخزون البطيء (14 يوم)</li>
+            <li>✓ شارة تاجر موثوق في الإسكندرية</li>
+          </ul>
+          <button class="btn-crimson-cta" style="width: 100%; justify-content: center;">ترقية إلى تاجر محترف</button>
+        </div>
+
+        <!-- Tier 3 -->
+        <div class="tier-card">
+          <div class="tier-name">الورش والمعارض (Enterprise)</div>
+          <div class="tier-price">999 <span style="font-size: 16px;">ج.م / شهرياً</span></div>
+          <div class="tier-commission-rate">أقل عمولة: 3% فقط</div>
+          <ul class="tier-features">
+            <li>✓ جميع مزايا باقة التاجر المحترف</li>
+            <li>✓ ربط مباشر بكتالوج WhatsApp Business API</li>
+            <li>✓ أولوية قصوى لأسطول المناديب والتحصيل</li>
+            <li>✓ تقارير أسبوعية بحركة أسعار سوق الإسكندرية</li>
+            <li>✓ دعم مخصص 24/7 ومسؤول حسابات</li>
+          </ul>
+          <button class="btn-quick-prompt" style="width: 100%; padding: 10px;">تفعيل باقة المعارض والورش</button>
+        </div>
+      </div>
+
+      <!-- 1-Click Social Ad Generator -->
+      <div class="ad-generator-box">
+        <div class="section-title-bar">
+          <div>
+            <h2 class="section-title">📢 مولّد الإعلانات التلقائي الذكي (Agent 4)</h2>
+            <p style="font-size: 13px; color: #64748B;">صياغة إعلانات بالعامية المصرية مع شارة الفحص المعيارية ورابط الشراء المباشر.</p>
+          </div>
+        </div>
+
+        <div class="form-row" style="margin-bottom: 16px;">
+          <div class="form-group" style="flex: 1;">
+            <label class="form-label">اختر السلعة لتوليد المنشورات الإعلانية:</label>
+            <select id="selectAdItem" class="form-input-full">
+              <!-- Populated dynamically -->
+            </select>
+          </div>
+          <div style="display: flex; align-items: flex-end; margin-bottom: 16px;">
+            <button id="btnGenerateAds" class="btn-crimson-cta" style="height: 42px;">توليد الإعلانات بضغطة زر ⚡</button>
+          </div>
+        </div>
+
+        <div id="adOutputsContainer" style="display: none;">
+          <div class="copy-output-card">
+            <h4 style="font-size: 14px; font-weight: 800; color: #1E293B;">📘 منشور Facebook Marketplace</h4>
+            <button class="btn-copy" onclick="copyAdText('adFbText')">نسخ المنشور</button>
+            <pre class="copy-text" id="adFbText"></pre>
+          </div>
+
+          <div class="copy-output-card">
+            <h4 style="font-size: 14px; font-weight: 800; color: #1E293B;">📸 نص إعلان Instagram Story</h4>
+            <button class="btn-copy" onclick="copyAdText('adIgText')">نسخ النص</button>
+            <pre class="copy-text" id="adIgText"></pre>
+          </div>
+
+          <div class="copy-output-card">
+            <h4 style="font-size: 14px; font-weight: 800; color: #1E293B;">💬 رسالة WhatsApp Catalog</h4>
+            <button class="btn-copy" onclick="copyAdText('adWaText')">نسخ الرسالة</button>
+            <pre class="copy-text" id="adWaText"></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Interactive Buyer Chat Simulator -->
+      <div class="chat-simulator-container">
+        <div class="section-title-bar">
+          <div>
+            <h2 class="section-title">💬 محاكي بوت الرد التلقائي وإحباط الفصال (Anti-Haggling Bot Simulator)</h2>
+            <p style="font-size: 13px; color: #64748B;">اختبر سرعة رد البوت الذكي (&lt; 2 ثانية) في الرد على استفسارات المشترين وصدهم عن المماطلة وتوجيههم للشراء.</p>
+          </div>
+        </div>
+
+        <div class="chat-box" id="simChatBox">
+          <div class="chat-bubble bot">
+            <div>مرحباً بك! أنا بوت "آنتي فصال" الذكي. اختر سلعة واكتب أي استفسار للمعاينة وسأرد فورياً بحكمة وأدب وبدون أي مجال للفصال! 🌊</div>
+            <div class="chat-meta">آنتي فصال • الآن</div>
+          </div>
+        </div>
+
+        <!-- Quick Prompt Buttons -->
+        <div class="quick-prompts">
+          <span style="font-size: 12px; font-weight: 700; color: #64748B; align-self: center;">جرّب سريعاً:</span>
+          <button class="btn-quick-prompt" onclick="sendSimPrompt('ينفع تفاوض في السعر وتنزلي شوية؟')">"ينفع تفاوض في السعر وتنزلي؟" 💸</button>
+          <button class="btn-quick-prompt" onclick="sendSimPrompt('سعره كام النهائي؟')">"سعره كام النهائي؟" 🏷️</button>
+          <button class="btn-quick-prompt" onclick="sendSimPrompt('السلعة دي لسه موجودة ولا اتباعت؟')">"لسه متاح؟" 📦</button>
+          <button class="btn-quick-prompt" onclick="sendSimPrompt('العنوان فين بالظبط في اسكندرية؟')">"العنوان فين بالظبط؟" 📍</button>
+        </div>
+
+        <form id="simChatForm" style="display: flex; gap: 10px; margin-top: 14px;">
+          <input type="text" id="simChatInput" class="form-input-full" placeholder="اكتب سؤال المشتري هنا واضغط إرسال..." required>
+          <button type="submit" class="btn-crimson-cta" style="padding: 10px 24px;">إرسال</button>
+        </form>
+      </div>
+
+      <!-- Merchant Commission & Tier Savings Calculator -->
+      <div class="calc-card">
+        <div class="section-title-bar">
+          <div>
+            <h2 class="section-title">💰 حاسبة وفورات عمولة التاجر (Merchant Commission & Savings Calculator)</h2>
+            <p style="font-size: 13px; color: #64748B;">حرّك مؤشر حجم مبيعاتك الشهرية لترى كم ستوفّر فوراً بالترقية إلى باقة Pro Trader أو Enterprise Workshop.</p>
+          </div>
+        </div>
+
+        <div class="calc-slider-box">
+          <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px;">
+            <label class="form-label" style="font-size: 14px; font-weight: 700;">حجم المبيعات الشهرية المتوقع بالإسكندرية:</label>
+            <span id="calcVolumeDisplay" style="font-size: 20px; font-weight: 900; color: var(--crimson-primary); font-family: var(--font-arabic);">100,000 ج.م</span>
+          </div>
+          <input type="range" id="calcVolumeSlider" class="calc-range-slider" min="10000" max="1000000" step="10000" value="100000">
+        </div>
+
+        <div class="tier-compare-grid">
+          <div class="tier-compare-card" id="cardTierEveryday">
+            <div style="font-size: 13px; font-weight: 700; color: #64748B;">البائع الفردي (Everyday)</div>
+            <div class="tier-fee-num" style="color: #64748B;">8%</div>
+            <div style="font-size: 12px; color: #64748B;">العمولة المستقطعة:</div>
+            <div id="calcFeeEveryday" style="font-size: 18px; font-weight: 800; color: #1E293B;">8,000 ج.م</div>
+            <div style="font-size: 11px; color: #94A3B8; margin-top: 6px;">بدون اشتراك شهري</div>
+          </div>
+
+          <div class="tier-compare-card highlight" id="cardTierPro">
+            <div style="font-size: 13px; font-weight: 700; color: var(--grade-emerald);">تاجر معتمد (Pro Trader)</div>
+            <div class="tier-fee-num" style="color: var(--grade-emerald);">5%</div>
+            <div style="font-size: 12px; color: #64748B;">العمولة المستقطعة:</div>
+            <div id="calcFeePro" style="font-size: 18px; font-weight: 800; color: var(--grade-emerald);">5,000 ج.م</div>
+            <div class="tier-savings-badge" id="calcSavingsPro">وفر 3,000 ج.م شهرياً! 🎉</div>
+          </div>
+
+          <div class="tier-compare-card" id="cardTierEnterprise">
+            <div style="font-size: 13px; font-weight: 700; color: #2563EB;">ورش ومحلات كبرى (Enterprise)</div>
+            <div class="tier-fee-num" style="color: #2563EB;">3%</div>
+            <div style="font-size: 12px; color: #64748B;">العمولة المستقطعة:</div>
+            <div id="calcFeeEnterprise" style="font-size: 18px; font-weight: 800; color: #2563EB;">3,000 ج.م</div>
+            <div class="tier-savings-badge" id="calcSavingsEnterprise" style="background-color: #DBEAFE; color: #1D4ED8;">وفر 5,000 ج.م شهرياً! 🚀</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== VIEW 5: DRIVER DISPATCH & LIVE AUDIT LOGS ==================== -->
+    <section id="viewDriverLogs" class="portal-view">
+      <!-- Active Driver Pickups -->
+      <div class="dashboard-section">
+        <div class="section-title-bar">
+          <div>
+            <h2 class="section-title">🚚 بطاقات المناديب وعمليات الاستلام النشطة بالإسكندرية</h2>
+            <p style="font-size: 13px; color: #64748B;">تتبع استلام الشحنات ودفع الكاش للبائعين وإعادة المحاولات التلقائية.</p>
+          </div>
+          <button id="btnRefreshDispatches" class="btn-quick-prompt">تحديث المناديب 🔄</button>
+        </div>
+
+        <div class="data-table-wrapper">
+          <table class="custom-table" id="tableDispatches">
+            <thead>
+              <tr>
+                <th>كود المهمة</th>
+                <th>كود السلعة</th>
+                <th>المنطقة</th>
+                <th>عنوان الاستلام</th>
+                <th>المندوب المعين</th>
+                <th>المبلغ المسلم للبائع كاش</th>
+                <th>محاولات الإعادة</th>
+                <th>الحالة الحالية</th>
+                <th>الإجراء</th>
+              </tr>
+            </thead>
+            <tbody id="tbodyDispatches">
+              <!-- Rendered dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Catalog Loop Trigger -->
+      <div class="dashboard-section" style="background: linear-gradient(135deg, #1A1A1A, #2D3748); color: #FFFFFF;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
+          <div>
+            <h3 style="font-size: 18px; font-weight: 800;">📚 حلقة توليد الكتالوج اليومي (Workflow 2 Runner)</h3>
+            <p style="font-size: 13px; color: #94A3B8; margin-top: 4px;">يقوم بمسح المعروضات وفلترة السجلات الفاسدة أو الخالية من الصور وتصدير كتالوج ماركداون معتمد (data/daily_catalog.md).</p>
+          </div>
+          <button id="btnRunCatalogLoop" class="btn-crimson-cta" style="padding: 12px 24px;">
+            <span>تشغيل Workflow 2 وفحص البيانات 🚀</span>
+          </button>
+        </div>
+        <div id="catalogLoopResult" style="margin-top: 14px; font-size: 13px; color: #A0AEC0; font-family: var(--font-mono); display: none;"></div>
+      </div>
+
+      <!-- 3 Live CSV Audit Logs -->
+      <div class="dashboard-section">
+        <div class="section-title-bar">
+          <div>
+            <h2 class="section-title">📋 سجلات التدقيق والمراقبة المباشرة (Live Audit Logs)</h2>
+            <p style="font-size: 13px; color: #64748B;">سجلات فورية متزامنة مع ملفات CSV الآمنة لتتبع العمليات والبنود المستبعدة والتصحيحات.</p>
+          </div>
+          <button id="btnRefreshLogs" class="btn-quick-prompt">تحديث السجلات 🔄</button>
+        </div>
+
+        <div class="logs-tabs">
+          <button class="btn-log-tab active" data-log="automation">سجل الأتمتة (automation_log.csv)</button>
+          <button class="btn-log-tab" data-log="skipped">السجلات المستبعدة (skipped_items_log.csv)</button>
+          <button class="btn-log-tab" data-log="corrections">تعديلات التجار (corrections.csv)</button>
+        </div>
+
+        <div class="log-table-container">
+          <table class="log-table" id="logTable">
+            <thead id="logThead">
+              <!-- Headers set via JS -->
+            </thead>
+            <tbody id="logTbody">
+              <!-- Logs populated via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== VIEW 6: ALEXANDRIA PRICE INDEX ==================== -->
+    <section id="viewPriceIndex" class="portal-view">
+      <div class="price-matrix-container">
+        <div class="price-matrix-header">
+          <div>
+            <h2 class="section-title">📊 مؤشر أسعار المستعمل المعتمد بالإسكندرية (Alexandria Price Matrix)</h2>
+            <p style="font-size: 13px; color: #64748B;">
+              بيانات مرجعية حية مسعّرة بناءً على حالة السوق في العطارين والمنشية ومحرم بك لحماية البائع والمشتري من الفصال العشوائي.
+            </p>
+          </div>
+          <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+            <select id="priceIndexCategoryFilter" class="district-selector" style="min-width: 160px;">
+              <option value="All">كل الفئات 🏷️</option>
+              <option value="Appliances">أجهزة منزلية ❄️</option>
+              <option value="Electronics">إلكترونيات وشاشات 💻</option>
+              <option value="Furniture">أثاث العطارين 🛋️</option>
+            </select>
+            <input type="text" id="priceIndexSearchInput" class="form-input-full" style="width: 260px;" placeholder="ابحث عن موديل (مثال: توشيبا، زانوسي)...">
+          </div>
+        </div>
+
+        <div class="data-table-wrapper">
+          <table class="price-matrix-table" id="tablePriceMatrix">
+            <thead>
+              <tr>
+                <th>الفئة</th>
+                <th>الموديل والماركة</th>
+                <th>السعر المرجعي (أساس)</th>
+                <th>Grade A (100%)</th>
+                <th>Grade B (80%)</th>
+                <th>Grade C (60%)</th>
+                <th>Grade D (35%)</th>
+                <th>الاستهلاك السنوي</th>
+                <th>الإجراء</th>
+              </tr>
+            </thead>
+            <tbody id="tbodyPriceMatrix">
+              <!-- Dynamically populated via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== VIEW 7: ORDER & DRIVER TRACKING ==================== -->
+    <section id="viewTracking" class="portal-view">
+      <div class="tracking-hero-card">
+        <h2 style="font-size: 24px; font-weight: 900; margin-bottom: 6px;">🔍 تتبع الشحنة ومعاينة المندوب المباشرة</h2>
+        <p style="font-size: 14px; color: #CBD5E1; max-width: 650px;">
+          أدخل كود الصفقة، رقم السلعة، أو رقم الهاتف لمعرفة خط سير الكابتن وموعد المعاينة الكاش عند باب بيتك في الإسكندرية.
+        </p>
+
+        <form id="trackingSearchForm" class="tracking-search-bar">
+          <input type="text" id="trackingQueryInput" class="tracking-search-input" placeholder="أدخل كود الصفقة (DEAL-xxxx) أو رقم السلعة (AF-xxxx) أو الهاتف..." required>
+          <button type="submit" class="btn-crimson-cta" style="padding: 14px 28px;">تتبع الشحنة 🚀</button>
+        </form>
+
+        <div class="tracking-quick-pills">
+          <span>روابط سريعة للتجربة:</span>
+          <button type="button" class="quick-track-pill" onclick="quickTrack('DEAL-2001')">DEAL-2001 (صفقة سيدي بشر)</button>
+          <button type="button" class="quick-track-pill" onclick="quickTrack('AF-1001')">AF-1001 (تلاجة توشيبا)</button>
+          <button type="button" class="quick-track-pill" onclick="quickTrack('01299998888')">هاتف: 01299998888</button>
+        </div>
+      </div>
+
+      <div id="trackingPlaceholder" style="text-align: center; padding: 40px; background: #FFF; border: 1px dashed #CBD5E1; border-radius: var(--radius-md); color: #64748B;">
+        <div style="font-size: 36px; margin-bottom: 8px;">📦</div>
+        <div style="font-size: 16px; font-weight: 700; color: #1E293B;">في انتظار إدخال كود الصفقة أو رقم السلعة</div>
+        <div style="font-size: 13px; color: #94A3B8; margin-top: 4px;">جرب الضغط على أحد الروابط السريعة أعلاه لعرض مسار الشحنة الحي فوراً.</div>
+      </div>
+
+      <div id="trackingResultArea" class="tracking-result-container" style="display: none;">
+        <!-- Left: 4-Step Stepper -->
+        <div class="tracking-stepper-box">
+          <div class="section-title-bar">
+            <div>
+              <h3 class="section-title" id="trackHeaderTitle">📍 مسار استلام ومعاينة الشحنة</h3>
+              <div id="trackHeaderMeta" style="font-size: 12px; color: #64748B; font-family: var(--font-mono); margin-top: 2px;"></div>
+            </div>
+            <span class="receipt-status-pill auto-approved" id="trackStatusBadge">جارية</span>
+          </div>
+
+          <div class="stepper" id="trackStepper">
+            <!-- Dynamically generated stepper nodes -->
+          </div>
+        </div>
+
+        <!-- Right: Driver & Item Summary Card -->
+        <div style="display: flex; flex-direction: column; gap: 16px;">
+          <div class="tracking-info-card" id="trackDriverCard">
+            <h4 style="font-size: 14px; font-weight: 800; color: #1E293B; border-bottom: 1px solid #F1F5F9; padding-bottom: 8px;">🚚 كابتن الاستلام المكلّف</h4>
+            <div class="driver-avatar-row">
+              <div class="driver-avatar">👨‍✈️</div>
+              <div>
+                <div id="trackDriverName" style="font-size: 15px; font-weight: 800; color: #0F172A;">كابتن أحمد الإسكندراني</div>
+                <div id="trackDriverPhone" style="font-size: 13px; color: #64748B; font-family: var(--font-mono);">01234567890</div>
+              </div>
+            </div>
+            <div style="font-size: 12px; color: #475569; background-color: #F8FAFC; padding: 10px; border-radius: 6px; display: flex; flex-direction: column; gap: 4px;">
+              <div>📍 منطقة التغطية: <strong id="trackDriverDistrict">سيدي بشر</strong></div>
+              <div>🏠 عنوان المعاينة: <strong id="trackAddress">شارع خالد بن الوليد</strong></div>
+              <div>💵 مبلغ التسليم كاش: <strong id="trackPayoutCash" style="color: var(--grade-emerald);">10,440 ج.م</strong></div>
+            </div>
+          </div>
+
+          <div class="tracking-info-card" id="trackItemCard">
+            <h4 style="font-size: 14px; font-weight: 800; color: #1E293B; border-bottom: 1px solid #F1F5F9; padding-bottom: 8px;">📦 تفاصيل السلعة المحجوزة</h4>
+            <div id="trackItemTitle" style="font-size: 14px; font-weight: 700; color: #1E293B;">تلاجة توشيبا 16 قدم نوفروست</div>
+            <div style="display: flex; justify-content: space-between; align-items: baseline;">
+              <span id="trackItemGrade" class="grade-badge grade-a">✓ Grade A</span>
+              <span id="trackItemPrice" style="font-size: 18px; font-weight: 900; color: var(--crimson-primary); font-family: var(--font-arabic);">14,500 ج.م</span>
+            </div>
+            <div style="font-size: 11px; color: var(--grade-emerald); font-weight: 700;">✓ السعر قطعي ومثبت بدون وجع فصال</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== VIEW 8: ABOUT & MANIFESTO ==================== -->
+    <section id="viewAbout" class="portal-view">
+      <div class="about-hero">
+        <span class="about-capstone-tag">WE Applied Technology School — Grade 2 AI & Automation Capstone</span>
+        <h1 class="about-slogan-large">"سعّر، بيع، ومن غير وجع فصال"</h1>
+        <p style="font-size: 15px; color: #CBD5E1; max-width: 720px; margin: 0 auto; line-height: 1.6;">
+          أول منصة مصرية ذكية لإعادة تداول السلع المستعملة وأتمتة حركة التجارة في الإسكندرية. بنيناها لنقضي تماماً على إهدار الوقت والمماطلة وبخس الأسعار في أسواق المستعمل عبر تقييمات عادلة ومثبتة بالذكاء الاصطناعي.
+        </p>
+      </div>
+
+      <!-- 5 Golden Guarantees -->
+      <h2 class="section-title" style="margin-bottom: 18px;">🌟 ميثاق وضمانات "آنتي فصال" الخمسة في الإسكندرية</h2>
+      <div class="guarantees-grid">
+        <div class="guarantee-card">
+          <div class="guarantee-icon">⚖️</div>
+          <h3 class="guarantee-title">1. سعر قطعي عادل بدون فصال</h3>
+          <p class="guarantee-desc">تسعير محايد مبني على مصفوفة أسعار أسواق الإسكندرية ومعدل الاستهلاك الفعلي للموديل بدون زيادة وهمية ولا بخس سعر.</p>
+        </div>
+
+        <div class="guarantee-card">
+          <div class="guarantee-icon">👁️</div>
+          <h3 class="guarantee-title">2. فحص متعدد الوسائط (Gemini Vision)</h3>
+          <p class="guarantee-desc">يقوم الذكاء الاصطناعي بتحليل 1 إلى 4 صور للسلعة، واكتشاف الخدوش والعيوب السطحية، وتحديد درجة النظافة بدقة عالية.</p>
+        </div>
+
+        <div class="guarantee-card">
+          <div class="guarantee-icon">🔍</div>
+          <h3 class="guarantee-title">3. حق المعاينة الكاملة قبل الدفع</h3>
+          <p class="guarantee-desc">المشتري لا يدفع قرشاً واحداً قبل وصول المندوب بالسلعة وتجربتها وفحصها بنفسه ومطابقتها لتقرير الذكاء الاصطناعي.</p>
+        </div>
+
+        <div class="guarantee-card">
+          <div class="guarantee-icon">💵</div>
+          <h3 class="guarantee-title">4. استلام كاش فوري عند باب البيت</h3>
+          <p class="guarantee-desc">البائع يستلم قيمة السلعة نقداً كاش في يده فور استلام الكابتن للسلعة، بدون انتظار المشتري النهائي.</p>
+        </div>
+
+        <div class="guarantee-card">
+          <div class="guarantee-icon">🏛️</div>
+          <h3 class="guarantee-title">5. دعم تجار الإسكندرية وورش العطارين</h3>
+          <p class="guarantee-desc">خصومات عمولة تصل إلى 3% لكبار تجار العطارين والمنشية مع أدوات أتمتة تسويقية 24/7 وبوت صد المماطلة.</p>
+        </div>
+      </div>
+
+      <!-- Interactive FAQ Accordion -->
+      <div class="faq-section">
+        <h2 class="section-title" style="margin-bottom: 20px;">❓ الأسئلة الشائعة حول المنصة والمعاملات</h2>
+
+        <div class="faq-item">
+          <div class="faq-question" onclick="toggleFaq(this)">
+            <span>كيف يعمل تقييم وفحص السلعة بالذكاء الاصطناعي؟</span>
+            <span class="faq-toggle-icon">+</span>
+          </div>
+          <div class="faq-answer" style="display: none;">
+            يقوم Agent 1 بربط الرؤية الحاسوبية (Gemini Vision) مع تحليل لغة البائع بالعامية المصرية ومقارنتها بقاعدة بيانات أسعار الإسكندرية لتحديد الفئة والماركة ودرجة النظافة (Grade A, B, C, D) ونسبة الثقة بدقة تتجاوز 85%.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question" onclick="toggleFaq(this)">
+            <span>ماذا يحدث إذا لم تعجبني السلعة عند المعاينة مع المندوب؟</span>
+            <span class="faq-toggle-icon">+</span>
+          </div>
+          <div class="faq-answer" style="display: none;">
+            يحق للمشتري رفض الاستلام بدون دفع ثمن السلعة، ويتم إعادة الشحنة للمخزن أو مراجعتها من خلال تاجر المنصة في لوحة التدقيق HITL بكل شفافية.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question" onclick="toggleFaq(this)">
+            <span>ما هي درجات النظافة الأربعة (Grades) المعتمدة؟</span>
+            <span class="faq-toggle-icon">+</span>
+          </div>
+          <div class="faq-answer" style="display: none;">
+            - <strong>Grade A (1.00):</strong> بحالة الزيرو أو كسر زيرو خالية من الخدوش.<br>
+            - <strong>Grade B (0.80):</strong> استعمال خفيف جداً مع علامات طفيفة لا تؤثر على الكفاءة.<br>
+            - <strong>Grade C (0.60):</strong> عيوب سطحية ملحوظة (خدوش أو خبطات بسيطة) مع سلامة الموتور/المكونات.<br>
+            - <strong>Grade D (0.35):</strong> أجهزة قديمة أو تحتاج صيانة خفيفة أو أثاث يحتاج تجديد دهان.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question" onclick="toggleFaq(this)">
+            <span>كيف أستفيد من نسبة العمولة المخفضة (3% و 5%)؟</span>
+            <span class="faq-toggle-icon">+</span>
+          </div>
+          <div class="faq-answer" style="display: none;">
+            التجار في أسواق العطارين والمنشية ومحرم بك يمكنهم التسجيل في باقة Pro Trader أو Enterprise والحصول على اشتراك التاجر المعتمد مما يقلل العمولة من 8% إلى 5% أو 3% ويمنحهم أدوات أتمتة الردود على مدار الساعة.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== VIEW 9: USER ACCOUNT & RELATIVE DETAILS ==================== -->
+    <section id="viewAccount" class="portal-view">
+      <div class="account-container">
+        <!-- Sidebar: User Profile & Nav -->
+        <div class="account-sidebar-card">
+          <div class="account-avatar-circle" id="accAvatar">👤</div>
+          <div style="text-align: center;">
+            <h3 style="font-size: 18px; font-weight: 800; color: var(--text-main);" id="accProfileName">محمود الإسكندراني</h3>
+            <div style="font-size: 13px; color: var(--text-muted);" id="accProfileUsername">@mahmoud_alex</div>
+            <div style="display: inline-block; margin-top: 6px; font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 4px; background-color: var(--crimson-light); color: var(--crimson-primary);" id="accRoleBadge">مشتري معتمد (Buyer)</div>
+          </div>
+
+          <div style="font-size: 12px; color: var(--text-muted); border-top: 1px solid var(--border-color); padding-top: 12px; margin-top: 4px;">
+            <div>📍 الحي: <strong id="accDistrict">سيدي بشر (Sidi Beshr)</strong></div>
+            <div>📧 البريد: <strong id="accEmail">mahmoud@gmail.com</strong></div>
+          </div>
+
+          <ul class="account-nav-list">
+            <li class="account-nav-item active" data-tab="acc-overview" onclick="switchAccountTab('acc-overview')">📊 نظرة عامة (Overview)</li>
+            <li class="account-nav-item" data-tab="acc-seller" onclick="switchAccountTab('acc-seller')">🏷️ تفاصيل البائع (Sellers)</li>
+            <li class="account-nav-item" data-tab="acc-buyer" onclick="switchAccountTab('acc-buyer')">🛒 تفاصيل المشتري (Buyers)</li>
+            <li class="account-nav-item" data-tab="acc-delivery" onclick="switchAccountTab('acc-delivery')">🚚 تفاصيل المندوب (Delivery)</li>
+            <li class="account-nav-item" data-tab="acc-settings" onclick="switchAccountTab('acc-settings')">⚙️ الإعدادات (Settings)</li>
+          </ul>
+
+          <button class="btn-crimson-cta" style="width: 100%; justify-content: center; padding: 10px; margin-top: auto;" onclick="openAuthModal('signin')">
+            <span>تسجيل الخروج / تبديل الحساب</span>
+          </button>
+        </div>
+
+        <!-- Main Account Content Pane -->
+        <div class="account-main-content">
+          <!-- Sub-tab 1: Overview -->
+          <div id="tabAccOverview" class="account-sub-tab">
+            <h2 class="section-title" style="margin-bottom: 6px;">لوحة تحكم الحساب الشخصي</h2>
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px;">ملخص أنشطتك في البيع والشراء والشحن في أسواق الإسكندرية.</p>
+
+            <div class="admin-kpi-grid">
+              <div class="metric-card">
+                <div class="metric-title">📦 معروضاتي كبائع</div>
+                <div class="metric-value" id="accMetricSellerItems">5</div>
+                <div class="metric-subtitle">معتمدة ومفحوصة بالذكاء الاصطناعي</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-title">🛒 حجوزاتي كمشتري</div>
+                <div class="metric-value" id="accMetricBuyerDeals">4</div>
+                <div class="metric-subtitle">بانتظار المعاينة والتسليم كاش</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-title">💵 إجمالي مستحقات البيع الكاش</div>
+                <div class="metric-value" style="color: var(--grade-emerald);" id="accMetricCash">18,500 ج.م</div>
+                <div class="metric-subtitle">بدون استقطاعات أو وجع فصال</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sub-tab 2: Seller Details -->
+          <div id="tabAccSeller" class="account-sub-tab" style="display: none;">
+            <div class="section-title-bar">
+              <div>
+                <h3 class="section-title">🏷️ تفاصيل البائع (Seller Activities & Payouts)</h3>
+                <p style="font-size: 13px; color: var(--text-muted);">قائمة السلع التي عرضتها، حالة الفحص بالرؤية الحاسوبية، ومبالغ الاستلام الفوري كاش.</p>
+              </div>
+              <button class="btn-crimson-cta" onclick="switchPortalView('seller')">+ تسعير سلعة جديدة</button>
+            </div>
+            <div class="data-table-wrapper" style="margin-top: 14px;">
+              <table class="custom-table">
+                <thead>
+                  <tr>
+                    <th>كود السلعة</th>
+                    <th>اسم السلعة والموديل</th>
+                    <th>الحي</th>
+                    <th>درجة الفحص</th>
+                    <th>السعر المعروض</th>
+                    <th>الكاش الفوري المستحق</th>
+                    <th>الحالة</th>
+                  </tr>
+                </thead>
+                <tbody id="tbodyAccSellerItems">
+                  <!-- Populated via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Sub-tab 3: Buyer Details -->
+          <div id="tabAccBuyer" class="account-sub-tab" style="display: none;">
+            <h3 class="section-title">🛒 تفاصيل المشتري (Buyer Reservations & Orders)</h3>
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 14px;">السلع التي حجزتها مع حق المعاينة والتجربة الكاملة قبل الدفع كاش للمندوب.</p>
+            <div class="data-table-wrapper">
+              <table class="custom-table">
+                <thead>
+                  <tr>
+                    <th>كود الصفقة</th>
+                    <th>كود السلعة</th>
+                    <th>السعر القطعي</th>
+                    <th>العمولة المثبتة</th>
+                    <th>حالة الصفقة</th>
+                    <th>تتبع الشحنة</th>
+                  </tr>
+                </thead>
+                <tbody id="tbodyAccBuyerDeals">
+                  <!-- Populated via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Sub-tab 4: Delivery Details -->
+          <div id="tabAccDelivery" class="account-sub-tab" style="display: none;">
+            <div class="section-title-bar">
+              <div>
+                <h3 class="section-title">🚚 تفاصيل المندوب والاستلام (Delivery Courier Logs)</h3>
+                <p style="font-size: 13px; color: var(--text-muted);">سجل المشاوير المكتملة، مبالغ الكاش المحصلة، والتقييم في أحياء الإسكندرية.</p>
+              </div>
+              <button class="btn-quick-prompt" onclick="switchPortalView('delivery-portal')">الانتقال لبوابة الكابتن 🔐</button>
+            </div>
+            <div class="data-table-wrapper" style="margin-top: 14px;">
+              <table class="custom-table">
+                <thead>
+                  <tr>
+                    <th>كود المهمة</th>
+                    <th>الحي</th>
+                    <th>عنوان المعاينة</th>
+                    <th>مبلغ التسليم كاش</th>
+                    <th>الحالة</th>
+                  </tr>
+                </thead>
+                <tbody id="tbodyAccDeliveryLogs">
+                  <!-- Populated via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Sub-tab 5: Settings -->
+          <div id="tabAccSettings" class="account-sub-tab" style="display: none;">
+            <h3 class="section-title" style="margin-bottom: 16px;">⚙️ إعدادات الحساب والتفضيلات (Account Settings)</h3>
+            <div style="display: flex; flex-direction: column; gap: 16px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; padding: 14px; background: var(--canvas-bg); border-radius: var(--radius-sm);">
+                <div>
+                  <div style="font-weight: 700;">🌐 لغة الواجهة (Interface Language)</div>
+                  <div style="font-size: 12px; color: var(--text-muted);">اختر بين العربية والإنجليزية</div>
+                </div>
+                <button class="header-util-btn" style="color: var(--text-main); border-color: var(--border-color);" onclick="toggleLanguage()">
+                  تبديل إلى English
+                </button>
+              </div>
+
+              <div style="display: flex; justify-content: space-between; align-items: center; padding: 14px; background: var(--canvas-bg); border-radius: var(--radius-sm);">
+                <div>
+                  <div style="font-weight: 700;">🌙 الوضع الليلي (Dark Mode)</div>
+                  <div style="font-size: 12px; color: var(--text-muted);">راحة العين أثناء التصفح ليلاً</div>
+                </div>
+                <button class="header-util-btn" style="color: var(--text-main); border-color: var(--border-color);" onclick="toggleTheme()">
+                  تبديل الوضع ☀️/🌙
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== VIEW 10: SEPARATED DELIVERY PORTAL ==================== -->
+    <section id="viewDeliveryPortal" class="portal-view">
+      <!-- Security PIN Gate -->
+      <div id="captainGate" class="secret-gate-box">
+        <div style="font-size: 42px; margin-bottom: 10px;">🚚🔐</div>
+        <h2 style="font-size: 22px; font-weight: 900; color: var(--text-main); margin-bottom: 8px;">بوابة كباتن التوصيل بالإسكندرية (Captain Delivery Gate)</h2>
+        <p style="font-size: 13px; color: var(--text-muted); line-height: 1.5; margin-bottom: 18px;">
+          هذه الصفحة مخصصة لكباتن الشحن والاستلام فقط ومحمية برمز أمني لمنع وصول المستخدمين العاديين.<br>
+          <strong style="color: var(--crimson-primary);">طريقة الوصول المباشر:</strong> من خلال رابط <code style="font-family: var(--font-mono);">#delivery</code> أو الرابط في الفوتر برمز الكابتن: <code style="font-family: var(--font-mono);">CAPTAIN-ALEX</code>.
+        </p>
+
+        <form id="captainAuthForm">
+          <input type="password" id="captainPinInput" class="gate-pin-input" placeholder="CAPTAIN-ALEX" required>
+          <div style="display: flex; gap: 10px; justify-content: center; margin-top: 12px;">
+            <button type="submit" class="btn-crimson-cta" style="padding: 12px 24px;">دخول بوابة الكابتن 🔓</button>
+            <button type="button" class="btn-quick-prompt" onclick="prefillCaptainPin()">تجربة الكود تلقائياً ⚡</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Captain Workspace (Unlocked) -->
+      <div id="captainWorkspace" style="display: none;">
+        <div class="section-title-bar">
+          <div>
+            <span class="receipt-status-pill auto-approved">✓ تم التحقق من هوية الكابتن</span>
+            <h2 class="section-title" style="margin-top: 6px;">📦 مهام الاستلام والمعاينة النشطة لكباتن الإسكندرية</h2>
+            <p style="font-size: 13px; color: var(--text-muted);">تحصيل الكاش، فحص السلعة مع المشتري، وتأكيد التسليم الفوري.</p>
+          </div>
+          <div style="display: flex; gap: 10px;">
+            <button class="btn-quick-prompt" onclick="loadDispatches()">تحديث المهام 🔄</button>
+            <button class="btn-quick-prompt" style="background-color: #FEE2E2; color: #DC2626;" onclick="lockCaptainGate()">قفل البوابة 🔒</button>
+          </div>
+        </div>
+
+        <div class="data-table-wrapper" style="margin-top: 18px;">
+          <table class="custom-table">
+            <thead>
+              <tr>
+                <th>كود المهمة</th>
+                <th>كود السلعة</th>
+                <th>الحي</th>
+                <th>عنوان المعاينة</th>
+                <th>الكابتن المكلف</th>
+                <th>الهاتف</th>
+                <th>مبلغ التسليم كاش</th>
+                <th>الحالة</th>
+                <th>إجراء المعاينة</th>
+              </tr>
+            </thead>
+            <tbody id="tbodyCaptainTasks">
+              <!-- Rendered via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== VIEW 11: SEPARATED ADMIN MASTER PORTAL ==================== -->
+    <section id="viewAdminPortal" class="portal-view">
+      <!-- Admin Security PIN Gate -->
+      <div id="adminGate" class="secret-gate-box">
+        <div style="font-size: 42px; margin-bottom: 10px;">🛡️🔐</div>
+        <h2 style="font-size: 22px; font-weight: 900; color: var(--text-main); margin-bottom: 8px;">بوابة الإدارة المركزية والرقابة (Admin Master Portal)</h2>
+        <p style="font-size: 13px; color: var(--text-muted); line-height: 1.5; margin-bottom: 18px;">
+          صفحة الإدارة المركزية للتحكم بالمنصة وحظر المماطلين ومتابعة الأموال وحركة أسطول المناديب.<br>
+          <strong style="color: var(--crimson-primary);">طريقة الوصول المباشر:</strong> عبر رابط <code style="font-family: var(--font-mono);">#admin</code> أو من الفوتر بكلمة المرور: <code style="font-family: var(--font-mono);">ADMIN-2026</code>.
+        </p>
+
+        <form id="adminAuthForm">
+          <input type="password" id="adminPinInput" class="gate-pin-input" placeholder="ADMIN-2026" required>
+          <div style="display: flex; gap: 10px; justify-content: center; margin-top: 12px;">
+            <button type="submit" class="btn-crimson-cta" style="padding: 12px 24px;">دخول لوحة التحكم المركزية 🔓</button>
+            <button type="button" class="btn-quick-prompt" onclick="prefillAdminPin()">تجربة الكود تلقائياً ⚡</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Admin Dashboard (Unlocked) -->
+      <div id="adminWorkspace" style="display: none;">
+        <div class="section-title-bar">
+          <div>
+            <span class="receipt-status-pill auto-approved">✓ جلسة مشرف معتمدة (Super Admin)</span>
+            <h2 class="section-title" style="margin-top: 6px;">📊 لوحة التحكم والإحصائيات والرقابة المركزية</h2>
+          </div>
+          <button class="btn-quick-prompt" style="background-color: #FEE2E2; color: #DC2626;" onclick="lockAdminGate()">قفل لوحة الإدارة 🔒</button>
+        </div>
+
+        <!-- 1. Money Summary KPIs & Visual Graph -->
+        <div class="admin-kpi-grid">
+          <div class="metric-card">
+            <div class="metric-title">💵 إجمالي حجم التداول (GMV)</div>
+            <div class="metric-value" id="admTotalGmv">0 ج.م</div>
+            <div class="metric-subtitle">صفقات معتمدة ومثبتة السعر</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-title">📈 صافي عمولات المنصة (8%/5%/3%)</div>
+            <div class="metric-value" style="color: var(--grade-emerald);" id="admNetRevenue">0 ج.م</div>
+            <div class="metric-subtitle">إيرادات الوساطة المباشرة المحصلة</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-title">🚚 إجمالي مدفوعات كاش المناديب</div>
+            <div class="metric-value" style="color: #2563EB;" id="admDriverPayouts">0 ج.م</div>
+            <div class="metric-subtitle">مستحقات البائعين المسلمة فوراً</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-title">👥 المستخدمين النشطين / المحظورين</div>
+            <div class="metric-value" id="admUserRatio">0 / 0</div>
+            <div class="metric-subtitle">رقابة تلقائية ضد المماطلين</div>
+          </div>
+        </div>
+
+        <!-- Visual Bar Chart of Daily Volume in Alexandria -->
+        <div class="admin-chart-box">
+          <h3 style="font-size: 16px; font-weight: 800; color: var(--text-main); margin-bottom: 4px;">📊 الرسم البياني لحجم التداول اليومي بالإسكندرية (Daily Alexandria Volume)</h3>
+          <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">توزيع الصفقات والعمولات المحققة على مدار أيام الأسبوع.</p>
+          <div class="bar-chart-container" id="admBarChart">
+            <!-- Dynamically rendered bars -->
+          </div>
+        </div>
+
+        <!-- 2. User Management Table (Block / Unblock) -->
+        <div class="dashboard-section" style="margin-top: 24px;">
+          <div class="section-title-bar">
+            <div>
+              <h3 class="section-title">👥 إدارة المستخدمين وحظر المماطلين (User Management & Blocking)</h3>
+              <p style="font-size: 13px; color: var(--text-muted);">تحكم فوري بحسابات البائعين والمشترين والتجار لمنع التلاعب بالسعر القطعي.</p>
+            </div>
+            <button class="btn-quick-prompt" onclick="loadAdminUsers()">تحديث المستخدمين 🔄</button>
+          </div>
+
+          <div class="data-table-wrapper" style="margin-top: 12px;">
+            <table class="custom-table">
+              <thead>
+                <tr>
+                  <th>كود المستخدم</th>
+                  <th>الاسم الكامل</th>
+                  <th>اسم المستخدم / البريد</th>
+                  <th>الدور</th>
+                  <th>الحي</th>
+                  <th>الهاتف</th>
+                  <th>عدد الصفقات</th>
+                  <th>الحالة</th>
+                  <th>إجراء الرقابة</th>
+                </tr>
+              </thead>
+              <tbody id="tbodyAdminUsers">
+                <!-- Dynamically populated via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 3. Driver Fleet Locations & Status Matrix -->
+        <div class="dashboard-section" style="margin-top: 24px;">
+          <div class="section-title-bar">
+            <div>
+              <h3 class="section-title">🚚 أسطول المناديب وتغطية أحياء الإسكندرية (Driver Fleet Matrix)</h3>
+              <p style="font-size: 13px; color: var(--text-muted);">تتبع حالة الكباتن ومواقعهم، ومعرفة من لديه طلبات نشطة ومن هو متاح حالياً.</p>
+            </div>
+            <button class="btn-quick-prompt" onclick="loadAdminDrivers()">تحديث الأسطول 🔄</button>
+          </div>
+
+          <div class="data-table-wrapper" style="margin-top: 12px;">
+            <table class="custom-table">
+              <thead>
+                <tr>
+                  <th>كود الكابتن</th>
+                  <th>اسم السائق</th>
+                  <th>رقم الهاتف</th>
+                  <th>حي التغطية</th>
+                  <th>نوع المركبة</th>
+                  <th>التقييم</th>
+                  <th>الرحلات المكتملة</th>
+                  <th>الحالة الحالية</th>
+                  <th>إجراء الإسناد</th>
+                </tr>
+              </thead>
+              <tbody id="tbodyAdminDrivers">
+                <!-- Dynamically populated via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ==================== MODALS ==================== -->
+
+  <!-- Modal 1: Quick Reservation & Settlement (Workflow 3 Trigger) -->
+  <div class="modal-overlay" id="modalReserve">
+    <div class="modal-content">
+      <button class="modal-close" onclick="closeModal('modalReserve')">✕</button>
+      <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 6px;">🛒 حجز وشراء فوري — بدون فصال</h3>
+      <p style="font-size: 13px; color: #64748B; margin-bottom: 18px;">يتم حجز السلعة وتثبيت العمولة واستدعاء أقرب مندوب لتوصيلها إلى باب منزلك مع حق المعاينة الكاملة.</p>
+
+      <form id="reserveForm">
+        <input type="hidden" id="reserveItemId">
+        <div class="form-group">
+          <label class="form-label">السلعة المختارة:</label>
+          <input type="text" id="reserveItemTitle" class="form-input-full" readonly style="background-color: #F8FAFC; font-weight: 700;">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">السعر القطعي (ج.م):</label>
+            <input type="text" id="reserveItemPrice" class="form-input-full" readonly style="background-color: #F8FAFC; font-weight: 800; color: var(--crimson-primary);">
+          </div>
+          <div class="form-group">
+            <label class="form-label">رقم هاتف المشتري *</label>
+            <input type="tel" id="reserveBuyerPhone" class="form-input-full" placeholder="01234567890" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">عنوان التوصيل والمعاينة بالإسكندرية *</label>
+          <input type="text" id="reserveAddress" class="form-input-full" placeholder="مثال: شارع خالد بن الوليد، سيدي بشر، عمارة 15" required>
+        </div>
+
+        <button type="submit" class="btn-crimson-cta" style="width: 100%; justify-content: center; padding: 14px; font-size: 15px; margin-top: 10px;">
+          <span>✓ تأكيد الحجز وطلب المندوب للمعاينة</span>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 2: Merchant Adjust HITL Dialog -->
+  <div class="modal-overlay" id="modalAdjust">
+    <div class="modal-content">
+      <button class="modal-close" onclick="closeModal('modalAdjust')">✕</button>
+      <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 6px;">✏️ تعديل السلعة واعتماد التاجر (HITL Override)</h3>
+      <p style="font-size: 13px; color: #64748B; margin-bottom: 18px;">سيتم توثيق هذا التعديل وأسبابه في سجل <code>corrections.csv</code> لأغراض تدقيق ومتابعة الذكاء الاصطناعي.</p>
+
+      <form id="adjustForm">
+        <input type="hidden" id="adjustItemId">
+        <div class="form-group">
+          <label class="form-label">اسم السلعة:</label>
+          <input type="text" id="adjustTitle" class="form-input-full" readonly style="background-color: #F8FAFC;">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">الدرجة المصححة (Grade) *</label>
+            <select id="adjustGrade" class="form-input-full">
+              <option value="A">Grade A (ممتاز / كسر زيرو)</option>
+              <option value="B">Grade B (استعمال خفيف)</option>
+              <option value="C">Grade C (عيوب سطحية ملحوظة)</option>
+              <option value="D">Grade D (يحتاج صيانة)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">السعر المصحح (ج.م) *</label>
+            <input type="number" id="adjustPrice" class="form-input-full" step="50" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">سبب التعديل وملاحظات التاجر (تُسجل في corrections.csv) *</label>
+          <textarea id="adjustNotes" class="form-input-full" rows="3" placeholder="اكتب سبب تعديل السعر أو الدرجة..." required></textarea>
+        </div>
+
+        <button type="submit" class="btn-crimson-cta" style="width: 100%; justify-content: center; padding: 12px;">
+          <span>حفظ التعديل والاعتماد الفوري</span>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 3: Ask Bot Dialog (Agent 4 on specific item) -->
+  <div class="modal-overlay" id="modalAskBot">
+    <div class="modal-content">
+      <button class="modal-close" onclick="closeModal('modalAskBot')">✕</button>
+      <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 4px;" id="botModalTitle">💬 استفسر عن السلعة</h3>
+      <div style="font-size: 12px; color: var(--grade-emerald); font-weight: 700; margin-bottom: 14px;">رد فوري بالذكاء الاصطناعي &lt; 2 ثانية</div>
+
+      <div class="chat-box" id="botModalChatBox" style="height: 260px; margin-bottom: 14px;">
+        <!-- Chat messages dynamically rendered -->
+      </div>
+
+      <form id="botModalForm" style="display: flex; gap: 8px;">
+        <input type="text" id="botModalInput" class="form-input-full" placeholder="اسأل عن المعاينة، السعر، أو التوصيل..." required>
+        <button type="submit" class="btn-crimson-cta">إرسال</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 4: Rich Product Detail Modal (Single Product Page Experience) -->
+  <div class="modal-overlay" id="modalProductDetail">
+    <div class="modal-content" style="max-width: 780px;">
+      <button class="modal-close" onclick="closeModal('modalProductDetail')">✕</button>
+
+      <div class="product-detail-layout">
+        <div>
+          <div class="detail-gallery-main" id="detailGalleryMain">
+            <img id="detailImg" src="" alt="صورة السلعة">
+          </div>
+          <div style="font-size: 12px; color: #64748B; margin-top: 8px; text-align: center;">
+            📍 موقع السلعة: <strong id="detailDistrict" style="color: #0F172A;">سيدي بشر</strong>
+          </div>
+        </div>
+
+        <div class="detail-info-pane">
+          <div>
+            <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 6px;">
+              <span class="grade-badge grade-a" id="detailGradeBadge">✓ Grade A</span>
+              <span class="fixed-price-tag">سعر قطعي • بدون فصال</span>
+            </div>
+            <h3 style="font-size: 20px; font-weight: 800; color: #0F172A; line-height: 1.3;" id="detailTitle">اسم السلعة</h3>
+            <div style="font-size: 13px; color: #64748B; margin-top: 4px;" id="detailCategoryModel">الفئة — الموديل</div>
+          </div>
+
+          <div class="product-price-section" style="margin: 0;">
+            <span class="product-price" id="detailPrice" style="font-size: 28px;">0</span>
+            <span class="currency-label" style="font-size: 14px;">جنيه مصري</span>
+          </div>
+
+          <!-- AI Inspection Box -->
+          <div class="detail-specs-box">
+            <div class="spec-line">
+              <span class="spec-line-label">🤖 فحص الذكاء الاصطناعي:</span>
+              <span class="spec-line-val" id="detailConfidence" style="color: var(--grade-emerald);">94% ثقة</span>
+            </div>
+            <div class="spec-line">
+              <span class="spec-line-label">🔍 كشف العيوب:</span>
+              <span class="spec-line-val" id="detailDefects" style="font-size: 12px;">سليم 100% بدون عيوب</span>
+            </div>
+            <div class="spec-line">
+              <span class="spec-line-label">🚚 التسليم والمعاينة:</span>
+              <span class="spec-line-val">معاينة وتجربة مع المندوب قبل الدفع</span>
+            </div>
+          </div>
+
+          <p style="font-size: 13px; color: #475569; line-height: 1.5;" id="detailDesc"></p>
+
+          <div style="display: flex; gap: 10px; margin-top: auto;">
+            <button id="btnDetailReserve" class="btn-crimson-cta" style="flex: 2; justify-content: center; padding: 12px;">
+              <span>🛒 حجز ومعاينة فورية</span>
+            </button>
+            <button id="btnDetailAskBot" class="btn-quick-prompt" style="flex: 1; padding: 12px; font-weight: 700;">
+              <span>💬 اسأل البوت</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 5: Sign In / Register Modal (Email, Username, Google, Password, Role) -->
+  <div class="modal-overlay" id="modalAuth">
+    <div class="modal-content" style="max-width: 440px;">
+      <button class="modal-close" onclick="closeModal('modalAuth')">✕</button>
+      <div style="text-align: center; margin-bottom: 16px;">
+        <img src="/logo.png" alt="Anti-Fesal Logo" style="height: 48px; width: auto; margin-bottom: 8px;">
+        <h3 style="font-size: 20px; font-weight: 800; color: var(--color-ink);" id="authModalHeading">تسجيل الدخول إلى آنتي فصال</h3>
+        <p style="font-size: 13px; color: var(--color-muted);" id="authModalSubheading">سعّر، بيع، واشترِ بدون وجع فصال</p>
+      </div>
+
+      <!-- Auth Tabs: Login vs Register -->
+      <div class="auth-tabs">
+        <button type="button" class="auth-tab-btn active" id="tabBtnLogin" onclick="switchAuthTab('login')">تسجيل الدخول</button>
+        <button type="button" class="auth-tab-btn" id="tabBtnRegister" onclick="switchAuthTab('register')">إنشاء حساب جديد</button>
+      </div>
+
+      <!-- Google Sign In Button -->
+      <button type="button" class="btn-google-login" onclick="handleGoogleLogin()">
+        <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+        <span id="googleLoginText">الدخول السريع بحساب Google</span>
+      </button>
+
+      <div style="display: flex; align-items: center; margin: 16px 0; gap: 8px;">
+        <hr style="flex: 1; border: 0; border-top: 1px solid var(--border-color);">
+        <span style="font-size: 11px; color: var(--color-muted);" id="authDividerText">أو عبر البريد الإلكتروني</span>
+        <hr style="flex: 1; border: 0; border-top: 1px solid var(--border-color);">
+      </div>
+
+      <!-- Auth Form -->
+      <form id="authForm" onsubmit="handleAuthSubmit(event)">
+        <div class="form-group" id="groupFullName" style="display: none;">
+          <label class="form-label" id="labelFullName">الاسم الكامل *</label>
+          <input type="text" id="authFullName" class="form-input-full" placeholder="مثال: يوسف أحمد">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" id="labelEmail">البريد الإلكتروني أو اسم المستخدم *</label>
+          <input type="text" id="authEmail" class="form-input-full" placeholder="name@example.com أو username" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" id="labelPassword">كلمة المرور *</label>
+          <input type="password" id="authPassword" class="form-input-full" placeholder="••••••••" required>
+        </div>
+
+        <div class="form-group" id="groupRole" style="display: none;">
+          <label class="form-label" id="labelRole">نوع الحساب *</label>
+          <select id="authRole" class="form-input-full">
+            <option value="seller">بائع أفراد (Everyday Seller - عمولة 8%)</option>
+            <option value="buyer">مشتري / متصفح (Buyer)</option>
+            <option value="merchant">تاجر محترف (Pro Merchant - عمولة 5%)</option>
+            <option value="driver">كابتن توصيل ومعاينة (Alexandria Driver)</option>
+          </select>
+        </div>
+
+        <button type="submit" class="btn-crimson-cta" style="width: 100%; justify-content: center; padding: 12px; margin-top: 8px;" id="btnAuthSubmit">
+          <span id="authSubmitText">دخول</span>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Floating AI Comparison & Search Chatbot Widget -->
+  <div class="floating-chatbot-container" id="floatingChatbotContainer">
+    <div class="floating-chatbot-panel" id="floatingChatbotPanel">
+      <div class="chatbot-panel-header">
+        <div class="chatbot-panel-title">
+          <span>🤖 مُقارن آنتي فصال الذكي</span>
+          <span style="font-size: 11px; color: #10B981; font-weight: normal;">• متصل الآن</span>
+        </div>
+        <button class="chatbot-close-btn" onclick="toggleCompareChatbot()">✕</button>
+      </div>
+      <div class="chatbot-messages" id="chatbotMessages">
+        <div class="chatbot-msg-bubble bot">
+          أهلاً بك! 👋 أنا مساعدك الذكي في آنتي فصال. اسألني عن أي سلعة، قارن بين منتجين، أو اطلب ترشيح لأفضل سعر ومواصفات في الإسكندرية!
+        </div>
+      </div>
+      <div class="chatbot-input-bar">
+        <input type="text" id="chatbotInput" class="chatbot-input" placeholder="مثال: قارن بين ثلاجة توشيبا وسامسونج..." onkeydown="if(event.key==='Enter') sendCompareMessage()">
+        <button class="chatbot-send-btn" onclick="sendCompareMessage()">🚀</button>
+      </div>
+    </div>
+    <button class="floating-chatbot-btn" id="floatingChatbotBtn" onclick="toggleCompareChatbot()" title="مساعد المقارنة والبحث الذكي">
+      <span>💬</span>
+      <span class="chatbot-pulse-dot"></span>
+    </button>
+  </div>
+
+  <!-- Site Footer -->
+  <footer class="site-footer">
+    <div class="footer-container">
+      <div class="footer-top-grid">
+        <div>
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+            <img src="/logo.png" alt="Anti-Fesal Logo" style="height: 32px; width: auto; object-fit: contain;">
+            <span style="font-size: 18px; font-weight: 900; color: #FFFFFF;">آنتي فصال (Anti-Fesal)</span>
+          </div>
+          <p style="font-size: 13px; color: #94A3B8; line-height: 1.6; max-width: 320px;">
+            المنصة الذكية الأولى لإعادة تداول السلع المستعملة وأتمتة حركة التجارة في الإسكندرية. سعر عادل ومدروس بدون وجع فصال مع حق المعاينة الكاملة كاش.
+          </p>
+          <div style="font-size: 11px; color: #64748B; margin-top: 14px; font-family: var(--font-mono);">
+            Official Slogan: "سعّر، بيع، ومن غير وجع فصال"
+          </div>
+        </div>
+
+        <div>
+          <h4 class="footer-col-title">أقسام المنصة</h4>
+          <ul class="footer-links-list">
+            <li><a href="#showroom" onclick="switchPortalView('showroom')">🛍️ المعرض المعتمد (الرئيسية)</a></li>
+            <li><a href="#seller" onclick="switchPortalView('seller')">⚡ تسعير البائع الفوري</a></li>
+            <li><a href="#merchant" onclick="switchPortalView('merchant')">💼 لوحة تحكم التاجر (HITL)</a></li>
+            <li><a href="#trader-studio" onclick="switchPortalView('trader-studio')">📢 أتمتة التسويق والردود</a></li>
+            <li><a href="#driver-logs" onclick="switchPortalView('driver-logs')">🚚 المناديب وسجلات التدقيق</a></li>
+            <li><a href="#account" onclick="switchPortalView('account')">👤 حسابي وإعداداتي</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 class="footer-col-title">أدلة وخدمات</h4>
+          <ul class="footer-links-list">
+            <li><a href="#price-index" onclick="switchPortalView('price-index')">📊 مؤشر أسعار المستعمل</a></li>
+            <li><a href="#tracking" onclick="switchPortalView('tracking')">🔍 تتبع الشحنة والمندوب</a></li>
+            <li><a href="#about" onclick="switchPortalView('about')">ℹ️ ميثاق وضمانات المنصة</a></li>
+            <li><a href="/api/docs" target="_blank">📄 توثيق واجهة API (Swagger)</a></li>
+            <!-- Restricted Portals for Captains & Admin -->
+            <li style="margin-top: 8px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 8px;">
+              <a href="#delivery" onclick="switchPortalView('delivery-portal')" style="color: #38BDF8;">🚚 بوابة كباتن التوصيل (PIN: CAPTAIN-ALEX)</a>
+            </li>
+            <li>
+              <a href="#admin" onclick="switchPortalView('admin-portal')" style="color: #F87171;">🔐 بوابة الإدارة المركزية (PIN: ADMIN-2026)</a>
+            </li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 class="footer-col-title">أحياء تغطية الإسكندرية 📍</h4>
+          <div class="footer-district-tags">
+            <a href="#showroom" class="footer-district-tag" onclick="filterByDistrict('El-Attarine')">العطارين</a>
+            <a href="#showroom" class="footer-district-tag" onclick="filterByDistrict('El-Mansheya')">المنشية</a>
+            <a href="#showroom" class="footer-district-tag" onclick="filterByDistrict('Sidi Beshr')">سيدي بشر</a>
+            <a href="#showroom" class="footer-district-tag" onclick="filterByDistrict('Moharam Bek')">محرم بك</a>
+            <a href="#showroom" class="footer-district-tag" onclick="filterByDistrict('Smouha')">سموحة</a>
+            <a href="#showroom" class="footer-district-tag" onclick="filterByDistrict('Miami')">ميامي</a>
+            <a href="#showroom" class="footer-district-tag" onclick="filterByDistrict('Loran')">لوران</a>
+            <a href="#showroom" class="footer-district-tag" onclick="filterByDistrict('Gleem')">جليم</a>
+            <a href="#showroom" class="footer-district-tag" onclick="filterByDistrict('Roushdy')">رشدي</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-bottom-bar">
+        <div>
+          مشروع كابستون الذكاء الاصطناعي والأتمتة — <strong>مدرسة WE للتكنولوجيا التطبيقية</strong> (الصف الثاني — فرع الإسكندرية).
+        </div>
+        <div>
+          © 2026 Anti-Fesal Alexandria. جميع الحقوق محفوظة.
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Toast Notifications Container -->
+  <div id="toastContainer" class="toast-container" aria-live="polite"></div>
+
+  <script src="/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,27 @@
+# Environment Variables & Secrets
+.env
+.env.local
+*.env
+
+# Python Virtual Environments & Caches
+.venv/
+venv/
+env/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
+# Databases & Dynamic Storage
+data/antifesal.db
+data/images/*
+!data/images/.gitkeep
+
+# IDE & Editor Configs
+.vscode/
+.idea/
+
+# Operating System Files
+Thumbs.db
+.DS_Store

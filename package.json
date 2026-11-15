@@ -1,0 +1,22 @@
+{
+  "name": "anti-fesal",
+  "version": "1.0.0",
+  "description": "Anti-Fesal (آنتي فصال) - Autonomous Multi-Agent AI Secondhand Re-commerce & Merchant Automation Platform for Alexandria, Egypt",
+  "main": "run-dev.js",
+  "scripts": {
+    "dev": "node run-dev.js",
+    "start": "node run-dev.js",
+    "test": "node run-dev.js --test",
+    "run": "node run-dev.js"
+  },
+  "keywords": [
+    "anti-fesal",
+    "fastapi",
+    "ecommerce",
+    "ai-agents",
+    "gemini",
+    "alexandria"
+  ],
+  "author": "Anti-Fesal Team",
+  "license": "MIT"
+}

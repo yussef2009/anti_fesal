@@ -1,0 +1,37 @@
+category,brand_model,market_base_price_egp,depreciation_rate_annual,min_grade_allowed
+Appliances,Kiriazi Refrigerator 14ft Defrost,8500,0.08,D
+Appliances,Toshiba Refrigerator 16ft No-Frost,14500,0.07,D
+Appliances,Zanussi Refrigerator 18ft Inverter,19000,0.06,C
+Appliances,Beko Refrigerator 450L Silver,16500,0.07,C
+Appliances,LG Washing Machine 8kg Direct Drive,15500,0.08,D
+Appliances,Zanussi Washing Machine Perla Max 7kg,12000,0.08,D
+Appliances,Samsung Washing Machine EcoBubble 9kg,17500,0.07,C
+Appliances,Fresh Washing Machine Top Load 10kg,8000,0.09,D
+Appliances,Carrier Air Conditioner 1.5HP Optimax,16000,0.10,D
+Appliances,Sharp Air Conditioner 2.25HP Split,24000,0.08,C
+Appliances,Tornado Air Conditioner 1.5HP Cool Only,13500,0.10,D
+Appliances,Samsung Microwave 28L Grill,4200,0.10,D
+Appliances,Kenwood Microwave 30L Convection,5500,0.09,C
+Appliances,Universal Cooker 5 Burners Cast Iron,7500,0.08,D
+Appliances,Fresh Cooker Plaza 90x60 Safety,9200,0.07,C
+Electronics,Dell Latitude 5400 i5 8th Gen,9500,0.12,D
+Electronics,HP EliteBook 840 G6 i7 16GB,13500,0.11,D
+Electronics,Lenovo ThinkPad T490 i5 16GB,12000,0.10,D
+Electronics,Apple MacBook Pro M1 2020 8GB/256GB,32000,0.08,C
+Electronics,Apple iPhone 11 128GB,13000,0.12,D
+Electronics,Apple iPhone 13 128GB Midnight,24500,0.10,C
+Electronics,Samsung Galaxy S21 FE 5G 128GB,14000,0.12,D
+Electronics,Xiaomi Redmi Note 11 128GB,5200,0.15,D
+Electronics,Samsung TV 55 Inch Crystal UHD 4K,15000,0.10,C
+Electronics,LG TV 50 Inch NanoCell 4K Smart,14000,0.10,C
+Electronics,Tornado TV 43 Inch FHD Smart,8500,0.12,D
+Electronics,Sony PlayStation 4 Pro 1TB,11500,0.09,D
+Electronics,Sony PlayStation 5 Digital Edition,23000,0.07,C
+Furniture,Salon Attarine Louis Quinze Antique,22000,0.03,D
+Furniture,Damietta Solid Oak Bedroom Set,35000,0.04,D
+Furniture,Modern L-Shaped Corner Sofa Velvet,12500,0.08,D
+Furniture,Solid Beech Dining Table + 6 Chairs,16500,0.05,D
+Furniture,Kitchen Cabinet Alumital 2 Meter,9000,0.07,D
+Furniture,Executive Solid Wood Office Desk 160cm,6500,0.06,D
+Furniture,Classic El-Attarine Brass Chandelier 8 Arms,7500,0.04,C
+Furniture,Turkish Double Bed with Storage,8500,0.07,D

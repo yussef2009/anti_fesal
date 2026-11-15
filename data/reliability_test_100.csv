@@ -1,0 +1,101 @@
+item_id,title,category,brand_model,district,image_urls,condition_grade,quoted_price
+REL-001,Toshiba Refrigerator 16ft Spec #1,Appliances,Toshiba Refrigerator 16ft No-Frost,Sidi Beshr,img_rel_1.jpg,A,14500.0
+REL-002,LG Washing Machine 8kg Spec #2,Appliances,LG Washing Machine 8kg Direct Drive,Smouha,img_rel_2.jpg,B,12400.0
+REL-003,Carrier AC 1.5HP Spec #3,Appliances,Carrier Air Conditioner 1.5HP Optimax,Miami,img_rel_3.jpg,B,12800.0
+REL-004,Samsung Microwave 28L Spec #4,Appliances,Samsung Microwave 28L Grill,Moharam Bek,img_rel_4.jpg,A,4200.0
+REL-005,Universal Cooker 5B Spec #5,Appliances,Universal Cooker 5 Burners Cast Iron,El-Mansheya,img_rel_5.jpg,B,6000.0
+REL-006,Dell Latitude 5400 Spec #6,Electronics,Dell Latitude 5400 i5 8th Gen,Smouha,img_rel_6.jpg,B,7600.0
+REL-007,iPhone 13 128GB Spec #7,Electronics,Apple iPhone 13 128GB Midnight,Gleem,img_rel_7.jpg,A,24500.0
+REL-008,Samsung TV 55 UHD Spec #8,Electronics,Samsung TV 55 Inch Crystal UHD 4K,Loran,img_rel_8.jpg,A,15000.0
+REL-009,PlayStation 4 Pro 1TB Spec #9,Electronics,Sony PlayStation 4 Pro 1TB,Sidi Beshr,img_rel_9.jpg,B,9200.0
+REL-010,Salon Attarine Antique Spec #10,Furniture,Salon Attarine Louis Quinze Antique,El-Attarine,img_rel_10.jpg,A,22000.0
+REL-011,Damietta Bedroom Set Spec #11,Furniture,Damietta Solid Oak Bedroom Set,Smouha,img_rel_11.jpg,B,28000.0
+REL-012,Modern Corner Sofa Spec #12,Furniture,Modern L-Shaped Corner Sofa Velvet,Roushdy,img_rel_12.jpg,A,12500.0
+REL-013,Solid Beech Dining Set Spec #13,Furniture,Solid Beech Dining Table + 6 Chairs,Gleem,img_rel_13.jpg,B,13200.0
+REL-014,Executive Wood Desk Spec #14,Furniture,Executive Solid Wood Office Desk 160cm,El-Attarine,img_rel_14.jpg,B,5200.0
+REL-015,Toshiba Refrigerator 16ft Spec #15,Appliances,Toshiba Refrigerator 16ft No-Frost,Sidi Beshr,img_rel_15.jpg,A,14500.0
+REL-016,LG Washing Machine 8kg Spec #16,Appliances,LG Washing Machine 8kg Direct Drive,Smouha,img_rel_16.jpg,B,12400.0
+REL-017,Carrier AC 1.5HP Spec #17,Appliances,Carrier Air Conditioner 1.5HP Optimax,Miami,img_rel_17.jpg,B,12800.0
+REL-018,Samsung Microwave 28L Spec #18,Appliances,Samsung Microwave 28L Grill,Moharam Bek,img_rel_18.jpg,A,4200.0
+REL-019,Universal Cooker 5B Spec #19,Appliances,Universal Cooker 5 Burners Cast Iron,El-Mansheya,img_rel_19.jpg,B,6000.0
+REL-020,Dell Latitude 5400 Spec #20,Electronics,Dell Latitude 5400 i5 8th Gen,Smouha,img_rel_20.jpg,B,7600.0
+REL-021,iPhone 13 128GB Spec #21,Electronics,Apple iPhone 13 128GB Midnight,Gleem,img_rel_21.jpg,A,24500.0
+REL-022,Samsung TV 55 UHD Spec #22,Electronics,Samsung TV 55 Inch Crystal UHD 4K,Loran,img_rel_22.jpg,A,15000.0
+REL-023,PlayStation 4 Pro 1TB Spec #23,Electronics,Sony PlayStation 4 Pro 1TB,Sidi Beshr,img_rel_23.jpg,B,9200.0
+REL-024,Salon Attarine Antique Spec #24,Furniture,Salon Attarine Louis Quinze Antique,El-Attarine,img_rel_24.jpg,A,22000.0
+REL-025,Damietta Bedroom Set Spec #25,Furniture,Damietta Solid Oak Bedroom Set,Smouha,img_rel_25.jpg,B,28000.0
+REL-026,Modern Corner Sofa Spec #26,Furniture,Modern L-Shaped Corner Sofa Velvet,Roushdy,img_rel_26.jpg,A,12500.0
+REL-027,Solid Beech Dining Set Spec #27,Furniture,Solid Beech Dining Table + 6 Chairs,Gleem,img_rel_27.jpg,B,13200.0
+REL-028,Executive Wood Desk Spec #28,Furniture,Executive Solid Wood Office Desk 160cm,El-Attarine,img_rel_28.jpg,B,5200.0
+REL-029,Toshiba Refrigerator 16ft Spec #29,Appliances,Toshiba Refrigerator 16ft No-Frost,Sidi Beshr,img_rel_29.jpg,A,14500.0
+REL-030,LG Washing Machine 8kg Spec #30,Appliances,LG Washing Machine 8kg Direct Drive,Smouha,img_rel_30.jpg,B,12400.0
+REL-031,Carrier AC 1.5HP Spec #31,Appliances,Carrier Air Conditioner 1.5HP Optimax,Miami,img_rel_31.jpg,B,12800.0
+REL-032,Samsung Microwave 28L Spec #32,Appliances,Samsung Microwave 28L Grill,Moharam Bek,img_rel_32.jpg,A,4200.0
+REL-033,Universal Cooker 5B Spec #33,Appliances,Universal Cooker 5 Burners Cast Iron,El-Mansheya,img_rel_33.jpg,B,6000.0
+REL-034,Dell Latitude 5400 Spec #34,Electronics,Dell Latitude 5400 i5 8th Gen,Smouha,img_rel_34.jpg,B,7600.0
+REL-035,iPhone 13 128GB Spec #35,Electronics,Apple iPhone 13 128GB Midnight,Gleem,img_rel_35.jpg,A,24500.0
+REL-036,Samsung TV 55 UHD Spec #36,Electronics,Samsung TV 55 Inch Crystal UHD 4K,Loran,img_rel_36.jpg,A,15000.0
+REL-037,PlayStation 4 Pro 1TB Spec #37,Electronics,Sony PlayStation 4 Pro 1TB,Sidi Beshr,img_rel_37.jpg,B,9200.0
+REL-038,Salon Attarine Antique Spec #38,Furniture,Salon Attarine Louis Quinze Antique,El-Attarine,img_rel_38.jpg,A,22000.0
+REL-039,Damietta Bedroom Set Spec #39,Furniture,Damietta Solid Oak Bedroom Set,Smouha,img_rel_39.jpg,B,28000.0
+REL-040,Modern Corner Sofa Spec #40,Furniture,Modern L-Shaped Corner Sofa Velvet,Roushdy,img_rel_40.jpg,A,12500.0
+REL-041,Solid Beech Dining Set Spec #41,Furniture,Solid Beech Dining Table + 6 Chairs,Gleem,img_rel_41.jpg,B,13200.0
+REL-042,Executive Wood Desk Spec #42,Furniture,Executive Solid Wood Office Desk 160cm,El-Attarine,img_rel_42.jpg,B,5200.0
+REL-043,Toshiba Refrigerator 16ft Spec #43,Appliances,Toshiba Refrigerator 16ft No-Frost,Sidi Beshr,img_rel_43.jpg,A,14500.0
+REL-044,LG Washing Machine 8kg Spec #44,Appliances,LG Washing Machine 8kg Direct Drive,Smouha,img_rel_44.jpg,B,12400.0
+REL-045,Carrier AC 1.5HP Spec #45,Appliances,Carrier Air Conditioner 1.5HP Optimax,Miami,img_rel_45.jpg,B,12800.0
+REL-046,Samsung Microwave 28L Spec #46,Appliances,Samsung Microwave 28L Grill,Moharam Bek,img_rel_46.jpg,A,4200.0
+REL-047,Universal Cooker 5B Spec #47,Appliances,Universal Cooker 5 Burners Cast Iron,El-Mansheya,img_rel_47.jpg,B,6000.0
+REL-048,Dell Latitude 5400 Spec #48,Electronics,Dell Latitude 5400 i5 8th Gen,Smouha,img_rel_48.jpg,B,7600.0
+REL-049,iPhone 13 128GB Spec #49,Electronics,Apple iPhone 13 128GB Midnight,Gleem,img_rel_49.jpg,A,24500.0
+REL-050,Samsung TV 55 UHD Spec #50,Electronics,Samsung TV 55 Inch Crystal UHD 4K,Loran,img_rel_50.jpg,A,15000.0
+REL-051,PlayStation 4 Pro 1TB Spec #51,Electronics,Sony PlayStation 4 Pro 1TB,Sidi Beshr,img_rel_51.jpg,B,9200.0
+REL-052,Salon Attarine Antique Spec #52,Furniture,Salon Attarine Louis Quinze Antique,El-Attarine,img_rel_52.jpg,A,22000.0
+REL-053,Damietta Bedroom Set Spec #53,Furniture,Damietta Solid Oak Bedroom Set,Smouha,img_rel_53.jpg,B,28000.0
+REL-054,Modern Corner Sofa Spec #54,Furniture,Modern L-Shaped Corner Sofa Velvet,Roushdy,img_rel_54.jpg,A,12500.0
+REL-055,Solid Beech Dining Set Spec #55,Furniture,Solid Beech Dining Table + 6 Chairs,Gleem,img_rel_55.jpg,B,13200.0
+REL-056,Executive Wood Desk Spec #56,Furniture,Executive Solid Wood Office Desk 160cm,El-Attarine,img_rel_56.jpg,B,5200.0
+REL-057,Toshiba Refrigerator 16ft Spec #57,Appliances,Toshiba Refrigerator 16ft No-Frost,Sidi Beshr,img_rel_57.jpg,A,14500.0
+REL-058,LG Washing Machine 8kg Spec #58,Appliances,LG Washing Machine 8kg Direct Drive,Smouha,img_rel_58.jpg,B,12400.0
+REL-059,Carrier AC 1.5HP Spec #59,Appliances,Carrier Air Conditioner 1.5HP Optimax,Miami,img_rel_59.jpg,B,12800.0
+REL-060,Samsung Microwave 28L Spec #60,Appliances,Samsung Microwave 28L Grill,Moharam Bek,img_rel_60.jpg,A,4200.0
+REL-061,Universal Cooker 5B Spec #61,Appliances,Universal Cooker 5 Burners Cast Iron,El-Mansheya,img_rel_61.jpg,B,6000.0
+REL-062,Dell Latitude 5400 Spec #62,Electronics,Dell Latitude 5400 i5 8th Gen,Smouha,img_rel_62.jpg,B,7600.0
+REL-063,iPhone 13 128GB Spec #63,Electronics,Apple iPhone 13 128GB Midnight,Gleem,img_rel_63.jpg,A,24500.0
+REL-064,Samsung TV 55 UHD Spec #64,Electronics,Samsung TV 55 Inch Crystal UHD 4K,Loran,img_rel_64.jpg,A,15000.0
+REL-065,PlayStation 4 Pro 1TB Spec #65,Electronics,Sony PlayStation 4 Pro 1TB,Sidi Beshr,img_rel_65.jpg,B,9200.0
+REL-066,Salon Attarine Antique Spec #66,Furniture,Salon Attarine Louis Quinze Antique,El-Attarine,img_rel_66.jpg,A,22000.0
+REL-067,Damietta Bedroom Set Spec #67,Furniture,Damietta Solid Oak Bedroom Set,Smouha,img_rel_67.jpg,B,28000.0
+REL-068,Modern Corner Sofa Spec #68,Furniture,Modern L-Shaped Corner Sofa Velvet,Roushdy,img_rel_68.jpg,A,12500.0
+REL-069,Solid Beech Dining Set Spec #69,Furniture,Solid Beech Dining Table + 6 Chairs,Gleem,img_rel_69.jpg,B,13200.0
+REL-070,Executive Wood Desk Spec #70,Furniture,Executive Solid Wood Office Desk 160cm,El-Attarine,img_rel_70.jpg,B,5200.0
+REL-071,Toshiba Refrigerator 16ft Spec #71,Appliances,Toshiba Refrigerator 16ft No-Frost,Sidi Beshr,img_rel_71.jpg,A,14500.0
+REL-072,LG Washing Machine 8kg Spec #72,Appliances,LG Washing Machine 8kg Direct Drive,Smouha,img_rel_72.jpg,B,12400.0
+REL-073,Carrier AC 1.5HP Spec #73,Appliances,Carrier Air Conditioner 1.5HP Optimax,Miami,img_rel_73.jpg,B,12800.0
+REL-074,Samsung Microwave 28L Spec #74,Appliances,Samsung Microwave 28L Grill,Moharam Bek,img_rel_74.jpg,A,4200.0
+REL-075,Universal Cooker 5B Spec #75,Appliances,Universal Cooker 5 Burners Cast Iron,El-Mansheya,img_rel_75.jpg,B,6000.0
+REL-076,Dell Latitude 5400 Spec #76,Electronics,Dell Latitude 5400 i5 8th Gen,Smouha,img_rel_76.jpg,B,7600.0
+REL-077,iPhone 13 128GB Spec #77,Electronics,Apple iPhone 13 128GB Midnight,Gleem,img_rel_77.jpg,A,24500.0
+REL-078,Samsung TV 55 UHD Spec #78,Electronics,Samsung TV 55 Inch Crystal UHD 4K,Loran,img_rel_78.jpg,A,15000.0
+REL-079,PlayStation 4 Pro 1TB Spec #79,Electronics,Sony PlayStation 4 Pro 1TB,Sidi Beshr,img_rel_79.jpg,B,9200.0
+REL-080,Salon Attarine Antique Spec #80,Furniture,Salon Attarine Louis Quinze Antique,El-Attarine,img_rel_80.jpg,A,22000.0
+REL-081,Damietta Bedroom Set Spec #81,Furniture,Damietta Solid Oak Bedroom Set,Smouha,img_rel_81.jpg,B,28000.0
+REL-082,Modern Corner Sofa Spec #82,Furniture,Modern L-Shaped Corner Sofa Velvet,Roushdy,img_rel_82.jpg,A,12500.0
+REL-083,Solid Beech Dining Set Spec #83,Furniture,Solid Beech Dining Table + 6 Chairs,Gleem,img_rel_83.jpg,B,13200.0
+REL-084,Executive Wood Desk Spec #84,Furniture,Executive Solid Wood Office Desk 160cm,El-Attarine,img_rel_84.jpg,B,5200.0
+REL-085,Toshiba Refrigerator 16ft Spec #85,Appliances,Toshiba Refrigerator 16ft No-Frost,Sidi Beshr,img_rel_85.jpg,A,14500.0
+REL-086,LG Washing Machine 8kg Spec #86,Appliances,LG Washing Machine 8kg Direct Drive,Smouha,img_rel_86.jpg,B,12400.0
+REL-087,Carrier AC 1.5HP Spec #87,Appliances,Carrier Air Conditioner 1.5HP Optimax,Miami,img_rel_87.jpg,B,12800.0
+REL-088,Samsung Microwave 28L Spec #88,Appliances,Samsung Microwave 28L Grill,Moharam Bek,img_rel_88.jpg,A,4200.0
+REL-089,Universal Cooker 5B Spec #89,Appliances,Universal Cooker 5 Burners Cast Iron,El-Mansheya,img_rel_89.jpg,B,6000.0
+REL-090,Dell Latitude 5400 Spec #90,Electronics,Dell Latitude 5400 i5 8th Gen,Smouha,img_rel_90.jpg,B,7600.0
+REL-091,iPhone 13 128GB Spec #91,Electronics,Apple iPhone 13 128GB Midnight,Gleem,img_rel_91.jpg,A,24500.0
+REL-092,Samsung TV 55 UHD Spec #92,Electronics,Samsung TV 55 Inch Crystal UHD 4K,Loran,img_rel_92.jpg,A,15000.0
+REL-093,PlayStation 4 Pro 1TB Spec #93,Electronics,Sony PlayStation 4 Pro 1TB,Sidi Beshr,img_rel_93.jpg,B,9200.0
+REL-094,Salon Attarine Antique Spec #94,Furniture,Salon Attarine Louis Quinze Antique,El-Attarine,img_rel_94.jpg,A,22000.0
+REL-095,Damietta Bedroom Set Spec #95,Furniture,Damietta Solid Oak Bedroom Set,Smouha,img_rel_95.jpg,B,28000.0
+REL-CORRUPT-01,Corrupt Empty Category Item,,Samsung TV 55 Inch Crystal UHD 4K,Smouha,img_c1.jpg,A,15000.0
+REL-CORRUPT-02,Corrupt Missing Image Item,Electronics,Apple iPhone 13 128GB Midnight,Gleem,,A,24500.0
+REL-CORRUPT-03,Corrupt Negative Price Item,Appliances,Kiriazi Refrigerator 14ft Defrost,El-Attarine,img_c3.jpg,D,-500.0
+REL-CORRUPT-04,Corrupt Zero Price Item,Furniture,Modern L-Shaped Corner Sofa Velvet,Sidi Beshr,img_c4.jpg,B,0.0
+REL-CORRUPT-05,Corrupt Severe Malformed Item,,Unknown Broken Gadget,Unknown,,D,-1200.0
