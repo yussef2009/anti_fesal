@@ -23,6 +23,7 @@ const state = {
   filteredItems: [],
   visibleLimit: 8,
   isLoadingMore: false,
+  favorites: JSON.parse(localStorage.getItem('antifesal_favorites') || '[]'),
   currentAppraisalItem: null,
   activeBotItemId: null,
   uploadedImages: [],
@@ -692,7 +693,7 @@ function renderShowroomList(reset = false) {
   const slice = items.slice(0, state.visibleLimit);
 
   if (container) {
-    container.innerHTML = slice.map(item => {
+    container.innerHTML = slice.map((item, idx) => {
       const grade = escapeHTML(item.condition_grade || 'A');
       const gradeClass = (grade === 'A' || grade === 'B') ? 'grade-a' : 'grade-c';
       const gradeText = t['grade' + grade] || (state.lang === 'ar' ? `الفئة ${grade}` : `Grade ${grade}`);
@@ -703,6 +704,7 @@ function renderShowroomList(reset = false) {
       const safeDistrict = escapeHTML(item.district || (state.lang === 'ar' ? 'الإسكندرية' : 'Alexandria'));
       const safeId = escapeHTML(item.id);
       const confidencePct = Math.round((item.confidence_score || 0.88) * 100);
+      const isFav = (state.favorites || []).includes(safeId);
 
       // Photo resolving
       let imgSrc = '/static/placeholder.jpg';
@@ -712,8 +714,11 @@ function renderShowroomList(reset = false) {
       }
 
       return `
-        <div class="product-list-item" onclick="openProductDetailModal('${safeId}')">
+        <div class="product-list-item" style="--item-idx: ${idx % 8};" onclick="openProductDetailModal('${safeId}')">
           <div class="product-list-thumb">
+            <button class="btn-react-heart ${isFav ? 'active' : ''}" onclick="toggleFavorite(event, '${safeId}')" title="${isFav ? (state.lang === 'ar' ? 'إزالة من المفضلة' : 'Remove from Favorites') : (state.lang === 'ar' ? 'حفظ في المفضلة' : 'Save to Favorites')}">
+              <span class="heart-icon">${isFav ? '❤️' : '🤍'}</span>
+            </button>
             <img src="${imgSrc}" loading="lazy" class="product-list-img" alt="${safeTitle}" onerror="this.onerror=null; this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22300%22 height=%22200%22><rect width=%22100%25%22 height=%22100%25%22 fill=%22%23EEF2F6%22/><text x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 font-family=%22sans-serif%22 font-size=%2218%22 fill=%22%2394A3B8%22>${encodeURIComponent(item.category)}</text></svg>'">
             <div class="card-badges">
               <span class="grade-badge ${gradeClass}">${gradeText}</span>
@@ -768,6 +773,38 @@ function renderShowroomList(reset = false) {
       }
     }
   }
+}
+
+// ------------------ Reactive Favorite / Heart Micro-interaction ------------------
+function toggleFavorite(event, itemId) {
+  if (event) event.stopPropagation();
+  if (!state.favorites) state.favorites = [];
+
+  const btn = event ? event.currentTarget : null;
+  const index = state.favorites.indexOf(itemId);
+  const isNowFav = index === -1;
+
+  if (isNowFav) {
+    state.favorites.push(itemId);
+  } else {
+    state.favorites.splice(index, 1);
+  }
+
+  localStorage.setItem('antifesal_favorites', JSON.stringify(state.favorites));
+
+  if (btn) {
+    btn.classList.add('popping');
+    btn.classList.toggle('active', isNowFav);
+    const icon = btn.querySelector('.heart-icon');
+    if (icon) icon.innerText = isNowFav ? '❤️' : '🤍';
+    setTimeout(() => btn.classList.remove('popping'), 460);
+  }
+
+  const toastTitle = state.lang === 'ar' ? 'المفضلة' : 'Favorites';
+  const toastMsg = isNowFav
+    ? (state.lang === 'ar' ? 'تمت إضافة السلعة إلى قائمة تفضيلاتك بنجاح ❤️' : 'Item saved to your Favorites ❤️')
+    : (state.lang === 'ar' ? 'تمت إزالة السلعة من المفضلة 🤍' : 'Item removed from Favorites 🤍');
+  showToast(toastTitle, toastMsg, 'success');
 }
 
 // ------------------ Lazy Loading Intersection Observer ------------------

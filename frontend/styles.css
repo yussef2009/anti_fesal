@@ -2687,5 +2687,216 @@ html[dir="ltr"] .floating-chatbot-panel {
   }
 }
 
+/* ==================== SMOOTH REACTS, TRANSITIONS & MICRO-INTERACTIONS ==================== */
+
+/* Smooth Global Dark Mode & Color Transition */
+body, .site-header, .product-list-item, .modal-content, .category-chip, .header-search-bar, .portal-view, input, select {
+  transition: background-color 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+              color 0.25s ease,
+              border-color 0.25s ease,
+              box-shadow 0.25s ease;
+}
+
+/* Staggered Entrance Animation for Product List Items */
+@keyframes itemEntranceFadeUp {
+  0% {
+    opacity: 0;
+    transform: translateY(24px) scale(0.98);
+  }
+  60% {
+    opacity: 0.92;
+    transform: translateY(-2px) scale(1.004);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.product-list-item {
+  animation: itemEntranceFadeUp 0.45s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+  animation-delay: calc(var(--item-idx, 0) * 0.055s);
+  will-change: transform, opacity;
+}
+
+/* Tactile Button Click Reaction (:active press) */
+button, .btn-crimson-cta, .btn-buy-reserve, .btn-ask-bot, .category-chip, .header-util-btn, .role-btn {
+  transform: translateZ(0);
+  transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.18s ease,
+              background-color 0.2s ease,
+              filter 0.2s ease;
+  user-select: none;
+}
+
+button:active, .btn-crimson-cta:active, .btn-buy-reserve:active, .btn-ask-bot:active, .header-util-btn:active {
+  transform: scale(0.95) translateY(1px) !important;
+  transition: transform 0.06s ease !important;
+}
+
+/* Floating React Heart / Favorite Button */
+.btn-react-heart {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 5;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.14);
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+html[dir="ltr"] .btn-react-heart {
+  right: auto;
+  left: 10px;
+}
+
+.btn-react-heart:hover {
+  background: #FFFFFF;
+  transform: scale(1.15);
+  box-shadow: 0 6px 16px rgba(224, 0, 0, 0.22);
+}
+
+.btn-react-heart .heart-icon {
+  font-size: 16px;
+  line-height: 1;
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  display: inline-block;
+}
+
+/* Heart Pop Keyframe Animation */
+@keyframes heartPop {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.5) rotate(-10deg); }
+  65% { transform: scale(0.85) rotate(6deg); }
+  85% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
+.btn-react-heart.active {
+  background: #FFFFFF;
+  border-color: #FECACA;
+}
+
+.btn-react-heart.popping .heart-icon {
+  animation: heartPop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+[data-theme="dark"] .btn-react-heart {
+  background: rgba(30, 41, 59, 0.88);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+/* Category Chips Bouncy React */
+@keyframes chipBounce {
+  0% { transform: scale(0.94); }
+  60% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.category-chip.active {
+  animation: chipBounce 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Smooth Modal Pop-In with Spring Physics */
+@keyframes modalSpringIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.92) translateY(16px);
+  }
+  60% {
+    opacity: 0.95;
+    transform: scale(1.01) translateY(-2px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.modal-overlay {
+  transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1), backdrop-filter 0.25s ease;
+  backdrop-filter: blur(8px);
+}
+
+.modal-overlay.active .modal-content {
+  animation: modalSpringIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity;
+}
+
+/* Subtle Shimmer Sheen on Product Thumbnail Hover */
+.product-list-thumb::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.22), transparent);
+  transform: skewX(-20deg);
+  transition: none;
+  pointer-events: none;
+}
+
+.product-list-item:hover .product-list-thumb::after {
+  left: 140%;
+  transition: left 0.75s ease-in-out;
+}
+
+/* Floating Chatbot Pulsating Glow Ring */
+@keyframes pulseRing {
+  0% {
+    box-shadow: 0 0 0 0 rgba(224, 0, 0, 0.55), 0 8px 24px rgba(224, 0, 0, 0.3);
+  }
+  70% {
+    box-shadow: 0 0 0 14px rgba(224, 0, 0, 0), 0 8px 24px rgba(224, 0, 0, 0.3);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(224, 0, 0, 0), 0 8px 24px rgba(224, 0, 0, 0.3);
+  }
+}
+
+.floating-chatbot-btn {
+  animation: pulseRing 2.4s infinite cubic-bezier(0.45, 0, 0.55, 1);
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.floating-chatbot-btn:hover {
+  transform: scale(1.1) rotate(-6deg);
+}
+
+.floating-chatbot-panel {
+  transform-origin: bottom right;
+  transition: all 0.32s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+
+html[dir="ltr"] .floating-chatbot-panel {
+  transform-origin: bottom left;
+}
+
+/* Chat Message Pop-In Transition */
+@keyframes msgPopIn {
+  0% {
+    opacity: 0;
+    transform: translateY(8px) scale(0.96);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.chatbot-msg-bubble {
+  animation: msgPopIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
 
 
