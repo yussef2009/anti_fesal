@@ -47,3 +47,9 @@ timestamp,event_type,item_id,execution_time_ms,status,details
 2026-11-15T22:01:33.824749,DISPATCH_ATTEMPT_2,TEST-DISP-FAIL,0.0,IN_PROGRESS,"District: El-Attarine, Delay: 3s, Driver: كابتن طارق الديب"
 2026-11-15T22:01:39.828463,DISPATCH_ATTEMPT_3,TEST-DISP-FAIL,0.0,IN_PROGRESS,"District: El-Attarine, Delay: 6s, Driver: كابتن طارق الديب"
 2026-11-15T22:01:39.829553,DISPATCH_FAILED,TEST-DISP-FAIL,9008.59,FAILED,"All 3 dispatch attempts failed after backoff (0s, 3s, 6s). Alert triggered."
+2026-11-17T15:53:43.221030,DISPATCH_ATTEMPT_1,TEST-DISP-OK,0.0,IN_PROGRESS,"District: Sidi Beshr, Delay: 0s, Driver: كابتن أحمد الإسكندراني"
+2026-11-17T15:53:43.222769,DISPATCH_SUCCESS,TEST-DISP-OK,1.13,SUCCESS,Driver كابتن أحمد الإسكندراني assigned on attempt 1
+2026-11-17T15:53:43.223352,DISPATCH_ATTEMPT_1,TEST-DISP-FAIL,0.0,IN_PROGRESS,"District: El-Attarine, Delay: 0s, Driver: كابتن طارق الديب"
+2026-11-17T15:53:46.226152,DISPATCH_ATTEMPT_2,TEST-DISP-FAIL,0.0,IN_PROGRESS,"District: El-Attarine, Delay: 3s, Driver: كابتن طارق الديب"
+2026-11-17T15:53:52.227816,DISPATCH_ATTEMPT_3,TEST-DISP-FAIL,0.0,IN_PROGRESS,"District: El-Attarine, Delay: 6s, Driver: كابتن طارق الديب"
+2026-11-17T15:53:52.229333,DISPATCH_FAILED,TEST-DISP-FAIL,9005.98,FAILED,"All 3 dispatch attempts failed after backoff (0s, 3s, 6s). Alert triggered."

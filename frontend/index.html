@@ -9,43 +9,47 @@
 </head>
 <body>
 
-  <!-- Top Sticky Header (Dubizzle Inspired) -->
-  <header class="site-header">
+  <!-- Top Sticky Header (Dubizzle Inspired - Direction Locked & Stable) -->
+  <header class="site-header" id="siteHeader">
     <div class="header-top">
-      <!-- Logo Section (Shortcut to Showroom Home) -->
-      <div class="brand-section" onclick="switchPortalView('showroom')" style="cursor: pointer;" title="الصفحة الرئيسية — المعرض المعتمد">
-        <img src="/logo.png" alt="Anti-Fesal Logo" class="brand-logo-img">
-      </div>
+      <!-- Left Cluster: Logo & Search -->
+      <div class="header-left">
+        <!-- Logo Section (Shortcut to Showroom Home) -->
+        <div class="brand-section" onclick="switchPortalView('showroom')" style="cursor: pointer;" title="الصفحة الرئيسية — المعرض المعتمد">
+          <img src="/logo.png" alt="Anti-Fesal Logo" class="brand-logo-img">
+        </div>
 
-      <!-- Search & Alexandria District Selector (Hidden until clicked via Animate UI) -->
-      <div class="header-search-wrapper">
-        <button id="btnSearchTrigger" class="search-trigger-btn" title="فتح البحث الفوري">
-          🔍
-        </button>
-        <div id="headerSearchBar" class="header-search-bar collapsed">
-          <select id="headerDistrictFilter" class="district-selector">
-            <option value="All">كل الإسكندرية 📍</option>
-            <option value="El-Attarine">العطارين (El-Attarine)</option>
-            <option value="El-Mansheya">المنشية (El-Mansheya)</option>
-            <option value="Sidi Beshr">سيدي بشر (Sidi Beshr)</option>
-            <option value="Moharam Bek">محرم بك (Moharam Bek)</option>
-            <option value="Smouha">سموحة (Smouha)</option>
-            <option value="Miami">ميامي (Miami)</option>
-            <option value="Loran">لوران (Loran)</option>
-            <option value="Gleem">جليم (Gleem)</option>
-            <option value="Roushdy">رشدي (Roushdy)</option>
-          </select>
-          <input type="text" id="headerSearchInput" class="search-input" placeholder="ابحث عن أجهزة كهربائية، لابتوبات، صالونات العطارين...">
-          <button id="headerSearchBtn" class="search-btn" title="بحث">🔍</button>
-          <button id="btnSearchClose" class="btn-search-close" title="إغلاق">✕</button>
+        <!-- Search & Alexandria District Selector -->
+        <div class="header-search-wrapper">
+          <button id="btnSearchTrigger" class="search-trigger-btn" title="البحث الفوري في الإسكندرية">
+            🔍
+          </button>
+          <div id="headerSearchBar" class="header-search-bar collapsed">
+            <select id="headerDistrictFilter" class="district-selector">
+              <option value="All">كل الإسكندرية 📍</option>
+              <option value="El-Attarine">العطارين</option>
+              <option value="El-Mansheya">المنشية</option>
+              <option value="Sidi Beshr">سيدي بشر</option>
+              <option value="Moharam Bek">محرم بك</option>
+              <option value="Smouha">سموحة</option>
+              <option value="Miami">ميامي</option>
+              <option value="Loran">لوران</option>
+              <option value="Gleem">جليم</option>
+              <option value="Roushdy">رشدي</option>
+            </select>
+            <input type="text" id="headerSearchInput" class="search-input" placeholder="ابحث عن أجهزة كهربائية، لابتوبات، صالونات العطارين...">
+            <button id="headerSearchBtn" class="search-btn" title="بحث">🔍</button>
+            <button id="btnSearchClose" class="btn-search-close" title="إغلاق">✕</button>
+          </div>
         </div>
       </div>
 
-      <!-- Header Actions: Lang, Dark Mode, Account, Dev Roles, Sell CTA -->
-      <div class="header-actions">
-        <!-- Language Switcher -->
-        <button id="btnLangToggle" class="header-util-btn" title="تبديل اللغة / Switch Language">
-          <span>🌐</span> <span id="txtLangCode">English</span>
+      <!-- Right Cluster: Sell CTA, Dark Mode, Language Symbol, and Upper Right Account Button -->
+      <div class="header-right">
+        <!-- Sell CTA Button -->
+        <button id="btnHeaderSellCta" class="btn-crimson-cta header-sell-btn" onclick="switchPortalView('seller')">
+          <span>+</span>
+          <span id="txtHeaderSellCta">سعّر وبِع بالذكاء الاصطناعي</span>
         </button>
 
         <!-- Dark Mode Switcher -->
@@ -53,21 +57,15 @@
           <span id="txtThemeIcon">🌙</span>
         </button>
 
-        <!-- Account Profile Button -->
-        <button id="btnHeaderAccount" class="header-util-btn" title="حسابي / Account Profile">
-          <span>👤</span> <span id="txtHeaderAccountLabel">حسابي</span>
+        <!-- Language Switcher: Simple symbol badge only (EN / عربي) -->
+        <button id="btnLangToggle" class="lang-symbol-btn" title="تبديل اللغة / Switch Language">
+          <span id="txtLangCode" class="lang-symbol-badge">EN</span>
         </button>
 
-        <div class="role-switcher" title="مبدّل الأدوار التجريبي الفوري (Dev Role Switcher)">
-          <span class="role-label" id="txtRoleLabel">الدور:</span>
-          <button class="role-btn" data-role="seller">بائع</button>
-          <button class="role-btn active" data-role="merchant">تاجر</button>
-          <button class="role-btn" data-role="driver">مندوب</button>
-        </div>
-
-        <button id="btnHeaderSellCta" class="btn-crimson-cta">
-          <span>+</span>
-          <span id="txtHeaderSellCta">سعّر وبِع بالذكاء الاصطناعي</span>
+        <!-- Account Profile Button: PINNED TO THE UPPER RIGHT CORNER -->
+        <button id="btnHeaderAccount" class="header-account-btn" title="حسابي / Account Profile">
+          <span class="account-avatar-mini" id="headerAvatarMini">👤</span>
+          <span id="txtHeaderAccountLabel" class="account-btn-label">حسابي</span>
         </button>
       </div>
     </div>
@@ -763,77 +761,205 @@
       <div class="account-container">
         <!-- Sidebar: User Profile & Nav -->
         <div class="account-sidebar-card">
-          <div class="account-avatar-circle" id="accAvatar">👤</div>
+          <div class="account-avatar-circle" id="accAvatar">MA</div>
           <div style="text-align: center;">
             <h3 style="font-size: 18px; font-weight: 800; color: var(--text-main);" id="accProfileName">محمود الإسكندراني</h3>
             <div style="font-size: 13px; color: var(--text-muted);" id="accProfileUsername">@mahmoud_alex</div>
-            <div style="display: inline-block; margin-top: 6px; font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 4px; background-color: var(--crimson-light); color: var(--crimson-primary);" id="accRoleBadge">مشتري معتمد (Buyer)</div>
+            <div style="display: inline-block; margin-top: 6px; font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 4px; background-color: var(--crimson-light); color: var(--crimson-primary);" id="accRoleBadge">بائع ومشتري معتمد</div>
           </div>
 
           <div style="font-size: 12px; color: var(--text-muted); border-top: 1px solid var(--border-color); padding-top: 12px; margin-top: 4px;">
-            <div>📍 الحي: <strong id="accDistrict">سيدي بشر (Sidi Beshr)</strong></div>
-            <div>📧 البريد: <strong id="accEmail">mahmoud@gmail.com</strong></div>
+            <div>📍 <span id="lblAccDistrictPrefix">الحي:</span> <strong id="accDistrict">سيدي بشر</strong></div>
+            <div>📧 <span id="lblAccEmailPrefix">البريد:</span> <strong id="accEmail">mahmoud@gmail.com</strong></div>
+            <div>📱 <span id="lblAccPhonePrefix">الهاتف:</span> <strong id="accPhone">01012345671</strong></div>
+            <div style="margin-top: 6px; color: var(--grade-emerald);">⭐ <strong id="accTrustScore">4.9 / 5.0 (موثوق بالإسكندرية)</strong></div>
           </div>
 
+          <!-- Account Tabs (Ordered: Information -> Settings -> Sellers -> Buyers -> Delivery) -->
           <ul class="account-nav-list">
-            <li class="account-nav-item active" data-tab="acc-overview" onclick="switchAccountTab('acc-overview')">📊 نظرة عامة (Overview)</li>
-            <li class="account-nav-item" data-tab="acc-seller" onclick="switchAccountTab('acc-seller')">🏷️ تفاصيل البائع (Sellers)</li>
-            <li class="account-nav-item" data-tab="acc-buyer" onclick="switchAccountTab('acc-buyer')">🛒 تفاصيل المشتري (Buyers)</li>
-            <li class="account-nav-item" data-tab="acc-delivery" onclick="switchAccountTab('acc-delivery')">🚚 تفاصيل المندوب (Delivery)</li>
-            <li class="account-nav-item" data-tab="acc-settings" onclick="switchAccountTab('acc-settings')">⚙️ الإعدادات (Settings)</li>
+            <li class="account-nav-item active" data-tab="info" id="navAccInfo" onclick="switchAccountTab('info')">
+              <span>ℹ️</span> <span id="txtNavInfo">معلومات الحساب</span>
+            </li>
+            <li class="account-nav-item" data-tab="settings" id="navAccSettings" onclick="switchAccountTab('settings')">
+              <span>⚙️</span> <span id="txtNavSettings">إعدادات الحساب</span>
+            </li>
+            <li class="account-nav-item" data-tab="seller" id="navAccSeller" onclick="switchAccountTab('seller')">
+              <span>🏷️</span> <span id="txtNavSeller">تفاصيل البائع</span>
+            </li>
+            <li class="account-nav-item" data-tab="buyer" id="navAccBuyer" onclick="switchAccountTab('buyer')">
+              <span>🛒</span> <span id="txtNavBuyer">تفاصيل المشتري</span>
+            </li>
+            <li class="account-nav-item" data-tab="delivery" id="navAccDelivery" onclick="switchAccountTab('delivery')">
+              <span>🚚</span> <span id="txtNavDelivery">تفاصيل المندوب</span>
+            </li>
           </ul>
 
-          <button class="btn-crimson-cta" style="width: 100%; justify-content: center; padding: 10px; margin-top: auto;" onclick="openAuthModal('signin')">
-            <span>تسجيل الخروج / تبديل الحساب</span>
+          <button class="btn-crimson-cta" style="width: 100%; justify-content: center; padding: 10px; margin-top: auto;" onclick="logoutUser()">
+            <span id="txtAccLogout">تسجيل الخروج</span>
           </button>
         </div>
 
         <!-- Main Account Content Pane -->
         <div class="account-main-content">
-          <!-- Sub-tab 1: Overview -->
-          <div id="tabAccOverview" class="account-sub-tab">
-            <h2 class="section-title" style="margin-bottom: 6px;">لوحة تحكم الحساب الشخصي</h2>
-            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px;">ملخص أنشطتك في البيع والشراء والشحن في أسواق الإسكندرية.</p>
+          <!-- 1. Sub-tab: Information & Overview -->
+          <div id="tabAcc_info" class="account-sub-tab">
+            <div class="section-title-bar">
+              <div>
+                <h2 class="section-title" id="txtAccInfoTitle" style="margin-bottom: 4px;">لوحة تحكم الحساب والمعلومات الأساسية</h2>
+                <p style="font-size: 13px; color: var(--text-muted);" id="txtAccInfoSubtitle">ملخص أنشطتك في البيع والشراء والشحن في أسواق الإسكندرية المعتمدة.</p>
+              </div>
+            </div>
 
-            <div class="admin-kpi-grid">
+            <div class="admin-kpi-grid" style="margin-top: 18px;">
               <div class="metric-card">
-                <div class="metric-title">📦 معروضاتي كبائع</div>
+                <div class="metric-title" id="txtKpiSellerTitle">📦 معروضاتي كبائع</div>
                 <div class="metric-value" id="accMetricSellerItems">5</div>
-                <div class="metric-subtitle">معتمدة ومفحوصة بالذكاء الاصطناعي</div>
+                <div class="metric-subtitle" id="txtKpiSellerSub">معتمدة ومفحوصة بالذكاء الاصطناعي وبدون فصال</div>
               </div>
               <div class="metric-card">
-                <div class="metric-title">🛒 حجوزاتي كمشتري</div>
+                <div class="metric-title" id="txtKpiBuyerTitle">🛒 حجوزاتي كمشتري</div>
                 <div class="metric-value" id="accMetricBuyerDeals">4</div>
-                <div class="metric-subtitle">بانتظار المعاينة والتسليم كاش</div>
+                <div class="metric-subtitle" id="txtKpiBuyerSub">بانتظار المعاينة والتسليم كاش</div>
               </div>
               <div class="metric-card">
-                <div class="metric-title">💵 إجمالي مستحقات البيع الكاش</div>
+                <div class="metric-title" id="txtKpiCashTitle">💵 المستحقات الكاش الفورية</div>
                 <div class="metric-value" style="color: var(--grade-emerald);" id="accMetricCash">18,500 ج.م</div>
-                <div class="metric-subtitle">بدون استقطاعات أو وجع فصال</div>
+                <div class="metric-subtitle" id="txtKpiCashSub">مستلمة فوراً بدون استقطاعات أو وجع فصال</div>
               </div>
+            </div>
+
+            <!-- Profile Summary Box -->
+            <div class="dashboard-section" style="margin-top: 24px;">
+              <h3 class="section-title" style="font-size: 16px; margin-bottom: 14px;" id="txtAccInfoCardHeader">📋 بيانات العضوية والتوثيق</h3>
+              <div class="account-info-grid">
+                <div class="info-cell">
+                  <div class="info-cell-label" id="lblInfoCellId">كود العضوية</div>
+                  <div class="info-cell-value" id="accDetailId">ALX-2026-9041</div>
+                </div>
+                <div class="info-cell">
+                  <div class="info-cell-label" id="lblInfoCellDate">تاريخ التسجيل</div>
+                  <div class="info-cell-value" id="accDetailDate">يناير 2026</div>
+                </div>
+                <div class="info-cell">
+                  <div class="info-cell-label" id="lblInfoCellDistrict">حي الإقامة والتغطية</div>
+                  <div class="info-cell-value" id="accDetailDistrict">سيدي بشر، الإسكندرية</div>
+                </div>
+                <div class="info-cell">
+                  <div class="info-cell-label" id="lblInfoCellStatus">حالة الحساب</div>
+                  <div class="info-cell-value" style="color: var(--grade-emerald);" id="accDetailStatus">✓ موثق ونشط</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Fast Action CTA Buttons -->
+            <div style="display: flex; gap: 12px; margin-top: 24px; flex-wrap: wrap;">
+              <button class="btn-crimson-cta" onclick="switchPortalView('seller')">
+                <span>+</span> <span id="txtBtnQuickSell">تسعير سلعة جديدة بالذكاء الاصطناعي</span>
+              </button>
+              <button class="btn-quick-prompt" onclick="switchPortalView('showroom')">
+                <span id="txtBtnQuickShowroom">تصفح المعرض والشراء الفوري 🛍️</span>
+              </button>
             </div>
           </div>
 
-          <!-- Sub-tab 2: Seller Details -->
-          <div id="tabAccSeller" class="account-sub-tab" style="display: none;">
+          <!-- 2. Sub-tab: Settings -->
+          <div id="tabAcc_settings" class="account-sub-tab" style="display: none;">
             <div class="section-title-bar">
               <div>
-                <h3 class="section-title">🏷️ تفاصيل البائع (Seller Activities & Payouts)</h3>
-                <p style="font-size: 13px; color: var(--text-muted);">قائمة السلع التي عرضتها، حالة الفحص بالرؤية الحاسوبية، ومبالغ الاستلام الفوري كاش.</p>
+                <h3 class="section-title" id="txtAccSettingsTitle">⚙️ إعدادات الحساب والتفضيلات</h3>
+                <p style="font-size: 13px; color: var(--text-muted);" id="txtAccSettingsSubtitle">تحكم بمعلوماتك الشخصية وتفضيلات العرض والإشعارات وحماية الحساب.</p>
               </div>
-              <button class="btn-crimson-cta" onclick="switchPortalView('seller')">+ تسعير سلعة جديدة</button>
             </div>
-            <div class="data-table-wrapper" style="margin-top: 14px;">
+
+            <form id="formAccountSettings" onsubmit="event.preventDefault(); saveAccountSettings();" style="margin-top: 18px; display: flex; flex-direction: column; gap: 18px;">
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label" id="lblSetFullName">الاسم الكامل *</label>
+                  <input type="text" id="accSettingFullName" class="form-input-full" value="محمود الإسكندراني" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" id="lblSetPhone">رقم الهاتف (للتواصل مع المندوب) *</label>
+                  <input type="tel" id="accSettingPhone" class="form-input-full" value="01012345671" required>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label" id="lblSetDistrict">حي التوصيل والمعاينة الرئيسي بالإسكندرية *</label>
+                  <select id="accSettingDistrict" class="form-input-full">
+                    <option value="Sidi Beshr" selected>سيدي بشر</option>
+                    <option value="Smouha">سموحة</option>
+                    <option value="El-Attarine">العطارين</option>
+                    <option value="El-Mansheya">المنشية</option>
+                    <option value="Moharam Bek">محرم بك</option>
+                    <option value="Miami">ميامي</option>
+                    <option value="Loran">لوران</option>
+                    <option value="Gleem">جليم</option>
+                    <option value="Roushdy">رشدي</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" id="lblSetLang">لغة الواجهة المفضلة</label>
+                  <select id="accSettingLang" class="form-input-full">
+                    <option value="ar" selected>العربية 🇪🇬</option>
+                    <option value="en">English 🇬🇧</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label" id="lblSetTheme">المظهر والوضع الليلي</label>
+                  <select id="accSettingTheme" class="form-input-full">
+                    <option value="light" selected>الوضع النهاري (Light)</option>
+                    <option value="dark">الوضع الليلي (Dark)</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" id="lblSetNotifications">إشعارات الرسائل والشحن</label>
+                  <select id="accSettingNotify" class="form-input-full">
+                    <option value="sms_whatsapp" selected>رسائل SMS وتنبيهات WhatsApp فورية</option>
+                    <option value="sms_only">رسائل SMS فقط</option>
+                    <option value="none">بدون تنبيهات خارجية</option>
+                  </select>
+                </div>
+              </div>
+
+              <div style="display: flex; gap: 12px; margin-top: 10px;">
+                <button type="submit" class="btn-crimson-cta" id="btnSaveSettings">
+                  <span>✓</span> <span id="txtBtnSaveSettings">حفظ التعديلات والتفضيلات</span>
+                </button>
+                <button type="button" class="btn-quick-prompt" onclick="switchAccountTab('info')">
+                  <span id="txtBtnCancelSettings">إلغاء والعودة للمعلومات</span>
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- 3. Sub-tab: Seller Details -->
+          <div id="tabAcc_seller" class="account-sub-tab" style="display: none;">
+            <div class="section-title-bar">
+              <div>
+                <h3 class="section-title" id="txtAccSellerTitle">🏷️ تفاصيل وأنشطة البائع</h3>
+                <p style="font-size: 13px; color: var(--text-muted);" id="txtAccSellerSubtitle">قائمة السلع التي عرضتها، حالة الفحص بالرؤية الحاسوبية، ومبالغ الاستلام الفوري كاش.</p>
+              </div>
+              <button class="btn-crimson-cta" onclick="switchPortalView('seller')">
+                <span>+</span> <span id="txtBtnSellerAdd">+ تسعير سلعة جديدة</span>
+              </button>
+            </div>
+
+            <div class="data-table-wrapper" style="margin-top: 16px;">
               <table class="custom-table">
                 <thead>
                   <tr>
-                    <th>كود السلعة</th>
-                    <th>اسم السلعة والموديل</th>
-                    <th>الحي</th>
-                    <th>درجة الفحص</th>
-                    <th>السعر المعروض</th>
-                    <th>الكاش الفوري المستحق</th>
-                    <th>الحالة</th>
+                    <th id="thSellerId">كود السلعة</th>
+                    <th id="thSellerTitle">اسم السلعة والموديل</th>
+                    <th id="thSellerDistrict">الحي</th>
+                    <th id="thSellerGrade">درجة الفحص</th>
+                    <th id="thSellerPrice">السعر المعروض</th>
+                    <th id="thSellerCash">الكاش الفوري المستحق</th>
+                    <th id="thSellerStatus">الحالة</th>
+                    <th id="thSellerAction">إجراء</th>
                   </tr>
                 </thead>
                 <tbody id="tbodyAccSellerItems">
@@ -843,20 +969,28 @@
             </div>
           </div>
 
-          <!-- Sub-tab 3: Buyer Details -->
-          <div id="tabAccBuyer" class="account-sub-tab" style="display: none;">
-            <h3 class="section-title">🛒 تفاصيل المشتري (Buyer Reservations & Orders)</h3>
-            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 14px;">السلع التي حجزتها مع حق المعاينة والتجربة الكاملة قبل الدفع كاش للمندوب.</p>
-            <div class="data-table-wrapper">
+          <!-- 4. Sub-tab: Buyer Details -->
+          <div id="tabAcc_buyer" class="account-sub-tab" style="display: none;">
+            <div class="section-title-bar">
+              <div>
+                <h3 class="section-title" id="txtAccBuyerTitle">🛒 تفاصيل وحجوزات المشتري</h3>
+                <p style="font-size: 13px; color: var(--text-muted);" id="txtAccBuyerSubtitle">السلع التي حجزتها مع حق المعاينة والتجربة الكاملة قبل الدفع كاش للمندوب.</p>
+              </div>
+              <button class="btn-quick-prompt" onclick="switchPortalView('showroom')">
+                <span id="txtBtnBuyerBrowse">تصفح المعرض والشراء 🛍️</span>
+              </button>
+            </div>
+
+            <div class="data-table-wrapper" style="margin-top: 16px;">
               <table class="custom-table">
                 <thead>
                   <tr>
-                    <th>كود الصفقة</th>
-                    <th>كود السلعة</th>
-                    <th>السعر القطعي</th>
-                    <th>العمولة المثبتة</th>
-                    <th>حالة الصفقة</th>
-                    <th>تتبع الشحنة</th>
+                    <th id="thBuyerDealId">كود الصفقة</th>
+                    <th id="thBuyerItemTitle">اسم السلعة</th>
+                    <th id="thBuyerPrice">السعر القطعي</th>
+                    <th id="thBuyerAddress">عنوان المعاينة بالإسكندرية</th>
+                    <th id="thBuyerStatus">حالة الصفقة</th>
+                    <th id="thBuyerAction">تتبع الشحنة</th>
                   </tr>
                 </thead>
                 <tbody id="tbodyAccBuyerDeals">
@@ -866,56 +1000,34 @@
             </div>
           </div>
 
-          <!-- Sub-tab 4: Delivery Details -->
-          <div id="tabAccDelivery" class="account-sub-tab" style="display: none;">
+          <!-- 5. Sub-tab: Delivery Details -->
+          <div id="tabAcc_delivery" class="account-sub-tab" style="display: none;">
             <div class="section-title-bar">
               <div>
-                <h3 class="section-title">🚚 تفاصيل المندوب والاستلام (Delivery Courier Logs)</h3>
-                <p style="font-size: 13px; color: var(--text-muted);">سجل المشاوير المكتملة، مبالغ الكاش المحصلة، والتقييم في أحياء الإسكندرية.</p>
+                <h3 class="section-title" id="txtAccDeliveryTitle">🚚 تفاصيل ومهام المندوب</h3>
+                <p style="font-size: 13px; color: var(--text-muted);" id="txtAccDeliverySubtitle">سجل مشاوير المعاينة والاستلام في أحياء الإسكندرية ومبالغ الكاش المحصلة.</p>
               </div>
-              <button class="btn-quick-prompt" onclick="switchPortalView('delivery-portal')">الانتقال لبوابة الكابتن 🔐</button>
+              <button class="btn-quick-prompt" onclick="switchPortalView('delivery-portal')">
+                <span id="txtBtnCaptainGate">الانتقال لبوابة الكابتن 🔐</span>
+              </button>
             </div>
-            <div class="data-table-wrapper" style="margin-top: 14px;">
+
+            <div class="data-table-wrapper" style="margin-top: 16px;">
               <table class="custom-table">
                 <thead>
                   <tr>
-                    <th>كود المهمة</th>
-                    <th>الحي</th>
-                    <th>عنوان المعاينة</th>
-                    <th>مبلغ التسليم كاش</th>
-                    <th>الحالة</th>
+                    <th id="thDeliveryTaskId">كود المهمة</th>
+                    <th id="thDeliveryDistrict">الحي</th>
+                    <th id="thDeliveryAddress">عنوان المعاينة</th>
+                    <th id="thDeliveryCash">مبلغ التسليم كاش</th>
+                    <th id="thDeliveryStatus">الحالة</th>
+                    <th id="thDeliveryAction">إجراء</th>
                   </tr>
                 </thead>
                 <tbody id="tbodyAccDeliveryLogs">
                   <!-- Populated via JS -->
                 </tbody>
               </table>
-            </div>
-          </div>
-
-          <!-- Sub-tab 5: Settings -->
-          <div id="tabAccSettings" class="account-sub-tab" style="display: none;">
-            <h3 class="section-title" style="margin-bottom: 16px;">⚙️ إعدادات الحساب والتفضيلات (Account Settings)</h3>
-            <div style="display: flex; flex-direction: column; gap: 16px;">
-              <div style="display: flex; justify-content: space-between; align-items: center; padding: 14px; background: var(--canvas-bg); border-radius: var(--radius-sm);">
-                <div>
-                  <div style="font-weight: 700;">🌐 لغة الواجهة (Interface Language)</div>
-                  <div style="font-size: 12px; color: var(--text-muted);">اختر بين العربية والإنجليزية</div>
-                </div>
-                <button class="header-util-btn" style="color: var(--text-main); border-color: var(--border-color);" onclick="toggleLanguage()">
-                  تبديل إلى English
-                </button>
-              </div>
-
-              <div style="display: flex; justify-content: space-between; align-items: center; padding: 14px; background: var(--canvas-bg); border-radius: var(--radius-sm);">
-                <div>
-                  <div style="font-weight: 700;">🌙 الوضع الليلي (Dark Mode)</div>
-                  <div style="font-size: 12px; color: var(--text-muted);">راحة العين أثناء التصفح ليلاً</div>
-                </div>
-                <button class="header-util-btn" style="color: var(--text-main); border-color: var(--border-color);" onclick="toggleTheme()">
-                  تبديل الوضع ☀️/🌙
-                </button>
-              </div>
             </div>
           </div>
         </div>

@@ -25,3 +25,4 @@ data/images/*
 # Operating System Files
 Thumbs.db
 .DS_Store
+.env
