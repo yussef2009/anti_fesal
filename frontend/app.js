@@ -678,8 +678,23 @@ function initNavigation() {
   const btnHeaderSell = document.getElementById('btnHeaderSellCta');
   if (btnHeaderSell) {
     btnHeaderSell.addEventListener('click', () => {
-      switchPortalView('seller');
+      handleHeaderSellClick();
     });
+  }
+}
+
+function handleHeaderSellClick() {
+  if (!state.currentUser) {
+    showToast('تسجيل الدخول أو الانضمام', 'يرجى تسجيل الدخول أو الانضمام كبائع معتمد لفتح استوديو التسعير', 'info');
+    openSellerApplyModal();
+    return;
+  }
+  const role = state.currentUser.role;
+  if (role === 'seller' || role === 'merchant' || role === 'admin') {
+    switchPortalView('seller');
+  } else {
+    showToast('طلب اعتماد بائع', 'عليك أولاً تقديم طلب انضمام كبائع معتمد لفتح استوديو التسعير بالذكاء الاصطناعي', 'info');
+    openSellerApplyModal();
   }
 }
 
@@ -692,6 +707,16 @@ function switchPortalView(viewName, updateHash = true) {
       tab.classList.add('active');
     } else {
       tab.classList.remove('active');
+    }
+  });
+
+  // Sync mobile bottom nav buttons
+  document.querySelectorAll('.mob-nav-btn').forEach(btn => {
+    const target = btn.dataset.view;
+    if (target === viewName || (target === 'priceIndex' && viewName === 'price-index')) {
+      btn.classList.add('active');
+    } else {
+      btn.classList.remove('active');
     }
   });
 
@@ -1099,7 +1124,8 @@ function initSellerIntake() {
           seller_tier: document.getElementById('sellerTier').value,
           description: document.getElementById('sellerDesc').value,
           image_urls: state.uploadedImages.length > 0 ? state.uploadedImages : ['default.jpg'],
-          declared_category: document.getElementById('sellerCategory').value
+          declared_category: document.getElementById('sellerCategory').value,
+          seller_id: state.currentUser ? state.currentUser.id : null
         };
 
         const result = await apiRequest('/api/intake', {
@@ -1110,6 +1136,7 @@ function initSellerIntake() {
         state.currentAppraisalItem = result;
         renderAppraisalReceipt(result);
         loadMetrics();
+        showToast('تم الفحص والتسعير بنجاح! ⚡', 'راجع تقرير الفحص والتسعير الفوري بالأسفل', 'success');
 
       } catch (err) {
         showToast('فشل تقييم السلعة', err.message, 'error');
@@ -1852,6 +1879,10 @@ function quickTrack(query) {
   trackOrder(query);
 }
 
+let trackingMapInstance = null;
+let trackingMarkers = [];
+let trackingPolyline = null;
+
 async function trackOrder(query) {
   const placeholder = document.getElementById('trackingPlaceholder');
   const resultArea = document.getElementById('trackingResultArea');
@@ -1866,57 +1897,104 @@ async function trackOrder(query) {
     document.getElementById('trackHeaderTitle').innerText = `📍 مسار الشحنة: ${data.deal?.id || data.dispatch?.id || query}`;
     document.getElementById('trackHeaderMeta').innerText = `تاريخ المعاملة: ${data.deal?.created_at || data.dispatch?.created_at || 'الآن'}`;
 
-    const isCompleted = data.dispatch?.status === 'COMPLETED';
+    // Try to fetch live tracking stage and coordinates if dispatch ID is available
+    let liveData = null;
+    if (data.dispatch && data.dispatch.id) {
+      try {
+        liveData = await apiRequest(`/api/dispatches/${encodeURIComponent(data.dispatch.id)}/live-tracking`);
+      } catch (e) {
+        console.warn('Live tracking endpoint fallback:', e);
+      }
+    }
+
+    const stepOrder = ['ORDER_PLACED', 'DRIVER_ASSIGNED', 'PICKED_UP', 'OUT_FOR_DELIVERY', 'DELIVERED_SETTLED'];
+    let currentStep = liveData?.current_step || data.dispatch?.current_step || 'ORDER_PLACED';
+    if (data.dispatch?.status === 'COMPLETED') currentStep = 'DELIVERED_SETTLED';
+    else if (data.dispatch?.status === 'IN_TRANSIT' && currentStep === 'ORDER_PLACED') currentStep = 'OUT_FOR_DELIVERY';
+    else if (data.dispatch?.driver_name && currentStep === 'ORDER_PLACED') currentStep = 'DRIVER_ASSIGNED';
+
+    const currentIndex = stepOrder.indexOf(currentStep);
+
+    const isCompleted = currentStep === 'DELIVERED_SETTLED';
     const statusBadge = document.getElementById('trackStatusBadge');
     if (statusBadge) {
       statusBadge.innerText = isCompleted ? '✓ مكتملة ومسلّمة' : '🚚 جارية بالحي';
       statusBadge.className = `receipt-status-pill ${isCompleted ? 'auto-approved' : 'pending-triage'}`;
     }
 
-    // Stepper Generation
+    // Top Buyer Notification Banner
+    const notifBanner = document.getElementById('trackNotificationBanner');
+    const notifText = document.getElementById('trackNotificationText');
+    if (notifBanner) {
+      if (currentStep === 'PICKED_UP' || currentStep === 'OUT_FOR_DELIVERY') {
+        notifBanner.style.display = 'flex';
+        if (notifText) {
+          notifText.innerText = currentStep === 'PICKED_UP'
+            ? `🚚 الكابتن ${escapeHTML(data.dispatch?.driver_name || 'أحمد')} استلم السلعة من البائع وسلّمه الكاش الفوري، وهو الآن في الطريق إليك للمعاينة والتجربة!`
+            : `🚚 الكابتن في خط سيره إليك الآن بشوارع ${escapeHTML(data.dispatch?.district || 'الإسكندرية')} ومعه السلعة للمعاينة والتجربة قبل الدفع!`;
+        }
+      } else {
+        notifBanner.style.display = 'none';
+      }
+    }
+
+    // 5-Stage Stepper Generation
     const stepper = document.getElementById('trackStepper');
-    const dispatchStatus = data.dispatch?.status || 'PENDING';
+    const stepNodes = [
+      {
+        key: 'ORDER_PLACED',
+        num: '1',
+        title: 'تم قبول العرض وتثبيت السعر القطعي',
+        desc: 'تم تأكيد الطلب وحجز السلعة وتثبيت عمولة الوساطة بنجاح بدون وجع فصال.',
+        time: data.deal?.created_at ? data.deal.created_at.replace('T', ' ').slice(0, 16) : 'مؤكد'
+      },
+      {
+        key: 'DRIVER_ASSIGNED',
+        num: '2',
+        title: 'تم تعيين كابتن الاستلام والتوصيل',
+        desc: `تم إسناد المهمة للكابتن <strong>${escapeHTML(data.dispatch?.driver_name || 'جاري التعيين')}</strong> لتغطية منطقة ${escapeHTML(data.dispatch?.district || data.item?.district || 'الإسكندرية')}.`,
+        time: data.dispatch?.driver_phone ? `هاتف: ${data.dispatch.driver_phone}` : ''
+      },
+      {
+        key: 'PICKED_UP',
+        num: '3',
+        title: 'الكابتن استلم السلعة وسلّم الكاش للبائع',
+        desc: `تم فحص السلعة أولياً وتسليم مبلغ <strong>${formatEGP(data.dispatch?.payout_cash || data.item?.seller_payout_cash || 0)}</strong> كاش فوري للبائع يد بيد.`,
+        time: 'إشعار فوري للمشتري 🔔'
+      },
+      {
+        key: 'OUT_FOR_DELIVERY',
+        num: '4',
+        title: 'المندوب في الطريق للمعاينة والتجربة',
+        desc: `يتوجه الكابتن إلى عنوان العميل: <strong>${escapeHTML(data.dispatch?.pickup_address || 'العنوان المسجل')}</strong> مع حق المعاينة الكاملة قبل دفع أي مليم.`,
+        time: 'تتبع مباشر عبر الـ GPS 📡'
+      },
+      {
+        key: 'DELIVERED_SETTLED',
+        num: '5',
+        title: 'تمت المعاينة بنجاح وتسليم المبلغ وإتمام الصفقة',
+        desc: 'استلم المشتري السلعة بعد التأكد من مطابقتها للفحص وتم تحصيل المبلغ بدون فصال.',
+        time: isCompleted ? 'تم الإغلاق بنجاح ✓' : 'بانتظار المعاينة'
+      }
+    ];
 
-    const step1Done = true;
-    const step2Done = Boolean(data.dispatch?.driver_name);
-    const step3Done = dispatchStatus === 'IN_TRANSIT' || dispatchStatus === 'COMPLETED';
-    const step4Done = dispatchStatus === 'COMPLETED';
+    stepper.innerHTML = stepNodes.map((s, idx) => {
+      const isDone = idx < currentIndex || (idx === currentIndex && isCompleted);
+      const isActive = idx === currentIndex && !isCompleted;
+      const statusClass = isDone ? 'completed' : (isActive ? 'active' : '');
+      const iconText = isDone ? '✓' : s.num;
 
-    stepper.innerHTML = `
-      <div class="step-node completed">
-        <div class="step-circle">✓</div>
-        <div class="step-content">
-          <div class="step-title">تم قبول العرض وتثبيت السعر القطعي</div>
-          <div class="step-desc">تم تأكيد الطلب وحجز السلعة وتثبيت عمولة الوساطة بنجاح بدون وجع فصال.</div>
-          <div class="step-time">${data.deal?.created_at ? data.deal.created_at.replace('T', ' ').slice(0, 16) : 'الآن'}</div>
+      return `
+        <div class="step-node ${statusClass}">
+          <div class="step-circle">${iconText}</div>
+          <div class="step-content">
+            <div class="step-title">${s.title}</div>
+            <div class="step-desc">${s.desc}</div>
+            <div class="step-time">${s.time}</div>
+          </div>
         </div>
-      </div>
-
-      <div class="step-node ${step2Done ? (step3Done ? 'completed' : 'active') : ''}">
-        <div class="step-circle">${step2Done ? '✓' : '2'}</div>
-        <div class="step-content">
-          <div class="step-title">تم تعيين كابتن الاستلام والتوصيل</div>
-          <div class="step-desc">تم إسناد المهمة للكابتن <strong>${escapeHTML(data.dispatch?.driver_name || 'جاري التعيين')}</strong> لتغطية منطقة ${escapeHTML(data.dispatch?.district || data.item?.district || 'الإسكندرية')}.</div>
-          <div class="step-time">${data.dispatch?.driver_phone ? `هاتف الكابتن: ${data.dispatch.driver_phone}` : ''}</div>
-        </div>
-      </div>
-
-      <div class="step-node ${step3Done ? (step4Done ? 'completed' : 'active') : ''}">
-        <div class="step-circle">${step3Done ? '✓' : '3'}</div>
-        <div class="step-content">
-          <div class="step-title">المندوب في الطريق للمعاينة والتجربة</div>
-          <div class="step-desc">يتوجه الكابتن إلى عنوان العميل: <strong>${escapeHTML(data.dispatch?.pickup_address || 'العنوان المسجل')}</strong> مع حق المعاينة الكاملة قبل الدفع.</div>
-        </div>
-      </div>
-
-      <div class="step-node ${step4Done ? 'completed' : ''}">
-        <div class="step-circle">${step4Done ? '✓' : '4'}</div>
-        <div class="step-content">
-          <div class="step-title">تمت المعاينة وتسليم الكاش بالكامل</div>
-          <div class="step-desc">استلم المشتري السلعة وتم تسليم مبلغ ${formatEGP(data.dispatch?.payout_cash || data.item?.seller_payout_cash || 0)} كاش فوراً.</div>
-        </div>
-      </div>
-    `;
+      `;
+    }).join('');
 
     // Driver & Item Info
     if (data.dispatch) {
@@ -1933,10 +2011,120 @@ async function trackOrder(query) {
       document.getElementById('trackItemPrice').innerText = formatEGP(data.item.expected_resale_price);
     }
 
+    // Render Leaflet Map
+    renderLiveTrackingMap(
+      liveData?.pickup_coords || { lat: 31.1925, lng: 29.8975 },
+      liveData?.delivery_coords || { lat: 31.2588, lng: 30.0125 },
+      liveData?.driver_coords || { lat: 31.2250, lng: 29.9550 },
+      data.dispatch?.district || 'الإسكندرية'
+    );
+
+    // ETA & Legend
+    const etaBadge = document.getElementById('trackEtaBadge');
+    if (etaBadge) {
+      const eta = liveData?.calculated_eta_mins || (currentStep === 'DELIVERED_SETTLED' ? 0 : 14);
+      etaBadge.innerText = currentStep === 'DELIVERED_SETTLED' ? '✓ تم الوصول والتسليم' : `⏳ الوقت المتوقع للوصول: ${eta} دقيقة`;
+    }
+
+    const legSeller = document.getElementById('mapLegendSeller');
+    const legBuyer = document.getElementById('mapLegendBuyer');
+    const legDriver = document.getElementById('mapLegendDriver');
+    if (legSeller) legSeller.innerText = data.item?.district || 'العطارين';
+    if (legBuyer) legBuyer.innerText = data.dispatch?.district || 'سيدي بشر';
+    if (legDriver) legDriver.innerText = (data.dispatch?.driver_name || 'كابتن أحمد') + ' (على خط السير)';
+
   } catch (err) {
     showToast('لم يتم العثور على الشحنة', err.message, 'warning');
   }
 }
+
+function renderLiveTrackingMap(pickupCoords, deliveryCoords, driverCoords, districtName) {
+  const mapEl = document.getElementById('liveTrackingMap');
+  if (!mapEl || typeof L === 'undefined') return;
+
+  const sellerLoc = (pickupCoords && pickupCoords.lat) ? [pickupCoords.lat, pickupCoords.lng] : [31.1925, 29.8975];
+  const buyerLoc = (deliveryCoords && deliveryCoords.lat) ? [deliveryCoords.lat, deliveryCoords.lng] : [31.2588, 30.0125];
+  const driverLoc = (driverCoords && driverCoords.lat) ? [driverCoords.lat, driverCoords.lng] : [
+    (sellerLoc[0] + buyerLoc[0]) / 2,
+    (sellerLoc[1] + buyerLoc[1]) / 2
+  ];
+
+  if (!trackingMapInstance) {
+    trackingMapInstance = L.map('liveTrackingMap').setView(driverLoc, 12);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 18,
+      attribution: '© OpenStreetMap | Anti-Fesal Alexandria'
+    }).addTo(trackingMapInstance);
+  } else {
+    setTimeout(() => {
+      trackingMapInstance.invalidateSize();
+      trackingMapInstance.setView(driverLoc, 12);
+    }, 100);
+  }
+
+  // Clear previous markers
+  trackingMarkers.forEach(m => trackingMapInstance.removeLayer(m));
+  trackingMarkers = [];
+  if (trackingPolyline) {
+    trackingMapInstance.removeLayer(trackingPolyline);
+    trackingPolyline = null;
+  }
+
+  // Custom marker icons
+  const sellerIcon = L.divIcon({
+    html: '<div style="font-size: 26px; text-shadow: 0 2px 5px rgba(0,0,0,0.3);">🏪</div>',
+    className: 'map-custom-marker',
+    iconSize: [30, 30],
+    iconAnchor: [15, 15]
+  });
+
+  const buyerIcon = L.divIcon({
+    html: '<div style="font-size: 26px; text-shadow: 0 2px 5px rgba(0,0,0,0.3);">🏠</div>',
+    className: 'map-custom-marker',
+    iconSize: [30, 30],
+    iconAnchor: [15, 15]
+  });
+
+  const driverIcon = L.divIcon({
+    html: '<div style="font-size: 28px; animation: pulseDot 2s infinite; text-shadow: 0 2px 6px rgba(224,0,0,0.4);">🚚</div>',
+    className: 'map-custom-marker',
+    iconSize: [32, 32],
+    iconAnchor: [16, 16]
+  });
+
+  const mSeller = L.marker(sellerLoc, { icon: sellerIcon }).addTo(trackingMapInstance)
+    .bindPopup('<b>🏪 نقطة الاستلام (البائع)</b><br>حي الاستلام المعتمد بالإسكندرية');
+  const mDriver = L.marker(driverLoc, { icon: driverIcon }).addTo(trackingMapInstance)
+    .bindPopup('<b>🚚 موقع الكابتن المباشر (Live GPS)</b><br>جاري نقل السلعة للمعاينة والتجربة');
+  const mBuyer = L.marker(buyerLoc, { icon: buyerIcon }).addTo(trackingMapInstance)
+    .bindPopup('<b>🏠 عنوان المعاينة (المشتري)</b><br>المعاينة والتسليم كاش بدون فصال');
+
+  trackingMarkers.push(mSeller, mDriver, mBuyer);
+
+  // Route Polyline
+  trackingPolyline = L.polyline([sellerLoc, driverLoc, buyerLoc], {
+    color: '#E00000',
+    weight: 3,
+    dashArray: '6, 8',
+    opacity: 0.85
+  }).addTo(trackingMapInstance);
+
+  try {
+    const group = L.featureGroup([mSeller, mDriver, mBuyer]);
+    trackingMapInstance.fitBounds(group.getBounds().pad(0.2));
+  } catch (e) {
+    // ignore bounds calculation on hidden containers
+  }
+}
+
+function refreshLiveTrackingMap() {
+  const query = document.getElementById('trackingQueryInput')?.value.trim();
+  if (query) {
+    trackOrder(query);
+    showToast('تحديث الخريطة', 'تم تحديث إحداثيات ومسار الكابتن بنجاح 🔄', 'info');
+  }
+}
+window.refreshLiveTrackingMap = refreshLiveTrackingMap;
 
 // ------------------ Merchant Tier & Savings Calculator ------------------
 function initTierCalculator() {
@@ -2070,6 +2258,26 @@ function filterByDistrict(district) {
 // ------------------ Auth Modal & User Session ------------------
 function initAuthModal() {
   updateHeaderUserDisplay();
+  if (state.currentUser) {
+    checkUserApplicationStatus();
+  }
+
+  // Wire security gate forms
+  const capForm = document.getElementById('captainAuthForm');
+  if (capForm) {
+    capForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      checkCaptainPin();
+    });
+  }
+  const admForm = document.getElementById('adminAuthForm');
+  if (admForm) {
+    admForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      checkAdminPin();
+    });
+  }
+
   const btnAcc = document.getElementById('btnHeaderAccount');
   if (btnAcc) {
     btnAcc.addEventListener('click', () => {
@@ -2258,6 +2466,9 @@ async function loadAccountData() {
     const initials = state.currentUser.avatar || state.currentUser.name.substring(0, 2).toUpperCase();
     avatarEl.innerText = initials;
   }
+
+  // Check and show onboarding application status (Pending / Approved / Rejected)
+  checkUserApplicationStatus();
 
   // Pre-fill settings form
   const setFullName = document.getElementById('accSettingFullName');
@@ -2450,8 +2661,10 @@ function checkCaptainPin() {
 
   if (pin.toUpperCase() === 'CAPTAIN-ALEX' || pin.toLowerCase() === 'alex' || pin === '1234') {
     state.captainUnlocked = true;
-    document.getElementById('gateCaptainDelivery').style.display = 'none';
-    document.getElementById('panelCaptainDelivery').style.display = 'block';
+    const gate = document.getElementById('captainGate') || document.getElementById('gateCaptainDelivery');
+    const work = document.getElementById('captainWorkspace') || document.getElementById('panelCaptainDelivery');
+    if (gate) gate.style.display = 'none';
+    if (work) work.style.display = 'block';
     if (errEl) errEl.style.display = 'none';
     loadCaptainDeliveryTasks();
     showToast('أهلاً يا كابتن!', 'تم فتح بوابة كباتن التوصيل بالإسكندرية', 'success');
@@ -2459,56 +2672,152 @@ function checkCaptainPin() {
     if (errEl) {
       errEl.innerText = 'رمز التحقق غير صحيح! استخدم الرمز السري: CAPTAIN-ALEX';
       errEl.style.display = 'block';
+    } else {
+      showToast('رمز الكابتن غير صحيح', 'استخدم الرمز الأمني: CAPTAIN-ALEX', 'warning');
     }
   }
 }
+window.checkCaptainPin = checkCaptainPin;
+
+function prefillCaptainPin() {
+  const pinInput = document.getElementById('captainPinInput');
+  if (pinInput) pinInput.value = 'CAPTAIN-ALEX';
+  checkCaptainPin();
+}
+window.prefillCaptainPin = prefillCaptainPin;
 
 function lockCaptainGate() {
   state.captainUnlocked = false;
-  document.getElementById('panelCaptainDelivery').style.display = 'none';
-  document.getElementById('gateCaptainDelivery').style.display = 'block';
+  const gate = document.getElementById('captainGate') || document.getElementById('gateCaptainDelivery');
+  const work = document.getElementById('captainWorkspace') || document.getElementById('panelCaptainDelivery');
+  if (work) work.style.display = 'none';
+  if (gate) gate.style.display = 'block';
   const pinInput = document.getElementById('captainPinInput');
   if (pinInput) pinInput.value = '';
   showToast('تم قفل البوابة', 'تم قفل جلسة الكابتن بأمان 🔒', 'info');
 }
+window.lockCaptainGate = lockCaptainGate;
 
 async function loadCaptainDeliveryTasks() {
   try {
     const res = await apiRequest('/api/dispatches');
-    const tbody = document.getElementById('captainTasksTable');
+    const tbody = document.getElementById('tbodyCaptainTasks') || document.getElementById('captainTasksTable');
     if (!tbody) return;
 
     if (!res.dispatches || res.dispatches.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--color-muted); padding: 20px;">لا توجد مهمات استلام نشطة حالياً. أنت متفرغ!</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; color: var(--text-muted); padding: 25px;">لا توجد مهمات استلام نشطة حالياً. أنت متفرغ!</td></tr>`;
       return;
     }
 
-    tbody.innerHTML = res.dispatches.map(d => `
-      <tr>
-        <td><strong>#${escapeHTML(d.id)}</strong></td>
-        <td><strong>${escapeHTML(d.district)}</strong></td>
-        <td>${escapeHTML(d.pickup_address)}</td>
-        <td><strong>${formatEGP(d.cash_amount)}</strong></td>
-        <td>${escapeHTML(d.driver_name)}</td>
-        <td><span class="status-pill status-${(d.status || 'PENDING').toLowerCase()}">${d.status}</span></td>
-        <td>
-          <button class="btn-quick-prompt" onclick="completeCaptainTask('${d.id}')">تأكيد الاستلام كاش ✓</button>
-        </td>
-      </tr>
-    `).join('');
+    tbody.innerHTML = res.dispatches.map(d => {
+      const step = d.current_step || 'ORDER_PLACED';
+      let actionBtn = '';
+      if (step === 'ORDER_PLACED' || step === 'DRIVER_ASSIGNED') {
+        actionBtn = `<button class="btn-quick-prompt" style="background:#ECFDF5; color:#065F46; font-weight:800;" onclick="advanceDispatchStep('${d.id}', 'PICKED_UP')">استلمت من البائع وسلّمت الكاش 📦</button>`;
+      } else if (step === 'PICKED_UP') {
+        actionBtn = `<button class="btn-quick-prompt" style="background:#EFF6FF; color:#1D4ED8; font-weight:800;" onclick="advanceDispatchStep('${d.id}', 'OUT_FOR_DELIVERY')">خرجت للمعاينة عند المشتري 🚚</button>`;
+      } else if (step === 'OUT_FOR_DELIVERY') {
+        actionBtn = `<button class="btn-quick-prompt" style="background:#FEF3C7; color:#92400E; font-weight:800;" onclick="advanceDispatchStep('${d.id}', 'DELIVERED_SETTLED')">تمت المعاينة وتسليم الكاش ✓</button>`;
+      } else {
+        actionBtn = `<span class="receipt-status-pill auto-approved">مكتملة ومسلّمة ✓</span>`;
+      }
+
+      return `
+        <tr>
+          <td><strong style="font-family: var(--font-mono);">#${escapeHTML(d.id)}</strong></td>
+          <td>${d.item_id ? '#' + escapeHTML(d.item_id) : '—'}</td>
+          <td><strong>${escapeHTML(d.district || 'الإسكندرية')}</strong></td>
+          <td>${escapeHTML(d.pickup_address || '—')}</td>
+          <td>${escapeHTML(d.driver_name || 'الكابتن')}</td>
+          <td style="font-family: var(--font-mono); font-size: 12px;">${escapeHTML(d.driver_phone || '—')}</td>
+          <td><strong style="color: var(--grade-emerald);">${formatEGP(d.cash_amount || d.payout_cash || 0)}</strong></td>
+          <td><span class="status-pill status-${(d.status || 'PENDING').toLowerCase()}">${escapeHTML(d.status || 'PENDING')}</span></td>
+          <td>${actionBtn}</td>
+        </tr>
+      `;
+    }).join('');
   } catch (err) {
     console.error('Error loading captain tasks:', err);
   }
 }
+window.loadCaptainDeliveryTasks = loadCaptainDeliveryTasks;
 
-async function completeCaptainTask(dispatchId) {
+let driverLocationWatchId = null;
+
+function toggleDriverGpsSharing() {
+  const badge = document.getElementById('driverGpsBadge');
+  const btn = document.getElementById('btnToggleDriverGps');
+
+  if (driverLocationWatchId) {
+    navigator.geolocation.clearWatch(driverLocationWatchId);
+    driverLocationWatchId = null;
+    if (badge) {
+      badge.innerText = 'متوقف 🔴';
+      badge.className = 'status-pill status-pending';
+    }
+    if (btn) btn.innerHTML = '<span>📍 تفعيل بث الموقع المباشر (GPS)</span>';
+    showToast('تم إيقاف مشاركة الموقع', 'تم إيقاف إرسال إحداثيات الـ GPS', 'info');
+    return;
+  }
+
+  if (!navigator.geolocation) {
+    showToast('خطأ في المتصفح', 'متصفحك لا يدعم خدمة تحديد الموقع الجغرافي (Geolocation)', 'error');
+    return;
+  }
+
+  if (btn) btn.innerHTML = '<span>⏳ جاري الاتصال بالأقمار الصناعية...</span>';
+
+  driverLocationWatchId = navigator.geolocation.watchPosition(
+    async (pos) => {
+      if (badge) {
+        badge.innerText = 'مباشر الآن 🟢 (GPS Active)';
+        badge.className = 'status-pill status-active';
+      }
+      if (btn) btn.innerHTML = '<span>🛑 إيقاف بث الموقع (Stop GPS)</span>';
+
+      const driverId = state.currentUser?.id || 'DRV-101';
+      const driverName = state.currentUser?.name || 'كابتن أحمد الإسكندراني';
+
+      try {
+        await apiRequest('/api/driver/location', {
+          method: 'POST',
+          body: JSON.stringify({
+            driver_id: driverId,
+            driver_name: driverName,
+            lat: pos.coords.latitude,
+            lng: pos.coords.longitude,
+            heading: pos.coords.heading || 0.0,
+            sharing_enabled: true
+          })
+        });
+      } catch (err) {
+        console.warn('Driver location stream error:', err);
+      }
+    },
+    (err) => {
+      if (btn) btn.innerHTML = '<span>📍 تفعيل بث الموقع المباشر (GPS)</span>';
+      showToast('تعذر الوصول للموقع', 'يرجى إعطاء الإذن للمتصفح للوصول للموقع الفعلي: ' + err.message, 'warning');
+    },
+    { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
+  );
+
+  showToast('تم تفعيل الـ GPS', 'يتم الآن بث إحداثياتك للمشتري والإدارة المركزية بدقة 🛰️', 'success');
+}
+window.toggleDriverGpsSharing = toggleDriverGpsSharing;
+
+async function advanceDispatchStep(dispatchId, nextStep) {
   try {
-    showToast('تأكيد الاستلام', `تم تأكيد استلام الشحنة #${dispatchId} وتسليم الكاش للبائع بنجاح ✓`, 'success');
+    const res = await apiRequest(`/api/dispatches/${encodeURIComponent(dispatchId)}/step`, {
+      method: 'POST',
+      body: JSON.stringify({ step: nextStep })
+    });
+    showToast('تم تحديث خط السير', `تم نقل المهمة للمرحلة: ${res.step_message} ✓`, 'success');
     loadCaptainDeliveryTasks();
   } catch (err) {
-    showToast('خطأ', err.message, 'error');
+    showToast('خطأ في تحديث المرحلة', err.message, 'error');
   }
 }
+window.advanceDispatchStep = advanceDispatchStep;
 
 // ------------------ View 11: Admin Master Portal (PIN ADMIN-2026) ------------------
 function checkAdminPin() {
@@ -2518,33 +2827,363 @@ function checkAdminPin() {
 
   if (pin.toUpperCase() === 'ADMIN-2026' || pin.toLowerCase() === 'admin' || pin === 'root') {
     state.adminUnlocked = true;
-    document.getElementById('gateAdminMaster').style.display = 'none';
-    document.getElementById('panelAdminMaster').style.display = 'block';
+    const gate = document.getElementById('adminGate') || document.getElementById('gateAdminMaster');
+    const work = document.getElementById('adminWorkspace') || document.getElementById('panelAdminMaster');
+    if (gate) gate.style.display = 'none';
+    if (work) work.style.display = 'block';
     if (errEl) errEl.style.display = 'none';
     loadAdminDashboard();
-    showToast('مرحباً بالإدارة المركزية', 'تم تسجيل الدخول بصلاحيات المدير العام', 'success');
+    showToast('مرحباً بالإدارة المركزية', 'تم تسجيل الدخول بصلاحيات المدير العام 🛡️', 'success');
   } else {
     if (errEl) {
       errEl.innerText = 'رمز التحقق غير صحيح! استخدم الرمز السري: ADMIN-2026';
       errEl.style.display = 'block';
+    } else {
+      showToast('رمز الإدارة غير صحيح', 'استخدم الرمز السري: ADMIN-2026', 'warning');
     }
   }
 }
+window.checkAdminPin = checkAdminPin;
+
+function prefillAdminPin() {
+  const pinInput = document.getElementById('adminPinInput');
+  if (pinInput) pinInput.value = 'ADMIN-2026';
+  checkAdminPin();
+}
+window.prefillAdminPin = prefillAdminPin;
 
 function lockAdminGate() {
   state.adminUnlocked = false;
-  document.getElementById('panelAdminMaster').style.display = 'none';
-  document.getElementById('gateAdminMaster').style.display = 'block';
+  const gate = document.getElementById('adminGate') || document.getElementById('gateAdminMaster');
+  const work = document.getElementById('adminWorkspace') || document.getElementById('panelAdminMaster');
+  if (work) work.style.display = 'none';
+  if (gate) gate.style.display = 'block';
   const pinInput = document.getElementById('adminPinInput');
   if (pinInput) pinInput.value = '';
   showToast('تم قفل بوابة الإدارة', 'تم تأمين لوحة التحكم 🔒', 'info');
 }
+window.lockAdminGate = lockAdminGate;
 
 async function loadAdminDashboard() {
+  loadAdminAnalytics();
+  loadAdminApplications();
   loadAdminUsers();
   loadAdminFinancials();
   loadAdminDrivers();
 }
+window.loadAdminDashboard = loadAdminDashboard;
+
+async function loadAdminAnalytics() {
+  try {
+    const data = await apiRequest('/api/admin/analytics');
+
+    // 1. Core KPIs
+    const elSold = document.getElementById('admOrdersSoldCount');
+    const elGmv = document.getElementById('admTotalGmv');
+    const elRev = document.getElementById('admNetRevenue');
+    const elPayouts = document.getElementById('admDriverPayouts');
+
+    if (elSold) elSold.innerText = data.orders_sold_count || 0;
+    if (elGmv) elGmv.innerText = formatEGP(data.financials?.gmv || 0);
+    if (elRev) elRev.innerText = formatEGP(data.financials?.platform_net_commission || 0);
+    if (elPayouts) elPayouts.innerText = formatEGP(data.financials?.driver_payouts || 0);
+
+    // 2. Top Categories Breakdown List
+    const catBox = document.getElementById('admTopCategoriesList');
+    if (catBox && data.top_categories) {
+      if (data.top_categories.length === 0) {
+        catBox.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 10px;">لا توجد مبيعات مسجلة حتى الآن.</div>';
+      } else {
+        const colors = ['bar-fill-crimson', 'bar-fill-emerald', 'bar-fill-blue', 'bar-fill-amber'];
+        catBox.innerHTML = data.top_categories.map((c, i) => `
+          <div class="breakdown-row">
+            <div class="breakdown-header">
+              <span>🏷️ ${escapeHTML(c.category)}</span>
+              <span><strong>${c.count}</strong> صفقة (${c.pct}%)</span>
+            </div>
+            <div class="breakdown-bar-track">
+              <div class="breakdown-bar-fill ${colors[i % colors.length]}" style="width: ${Math.max(5, c.pct)}%;"></div>
+            </div>
+          </div>
+        `).join('');
+      }
+    }
+
+    // 3. Top Alexandria Buying Locations Leaderboard
+    const distBox = document.getElementById('admTopDistrictsList');
+    if (distBox && data.top_locations) {
+      if (data.top_locations.length === 0) {
+        distBox.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 10px;">لا توجد بيانات أحياء مسجلة.</div>';
+      } else {
+        const maxDistCount = Math.max(...data.top_locations.map(d => d.count), 1);
+        distBox.innerHTML = data.top_locations.map((d, i) => {
+          const pct = Math.round((d.count / maxDistCount) * 100);
+          return `
+            <div class="breakdown-row">
+              <div class="breakdown-header">
+                <span>📍 <strong>${i + 1}. ${escapeHTML(d.district)}</strong></span>
+                <span><strong>${d.count}</strong> طلب شراء</span>
+              </div>
+              <div class="breakdown-bar-track">
+                <div class="breakdown-bar-fill bar-fill-emerald" style="width: ${Math.max(8, pct)}%;"></div>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+    }
+  } catch (err) {
+    console.error('Failed to load admin analytics:', err);
+  }
+}
+window.loadAdminAnalytics = loadAdminAnalytics;
+
+async function loadAdminApplications() {
+  try {
+    const res = await apiRequest('/api/admin/applications');
+    const tbody = document.getElementById('tbodyAdminApplications');
+    const badge = document.getElementById('badgePendingApps');
+    if (badge) badge.innerText = res.count || (res.applications ? res.applications.length : 0);
+    if (!tbody) return;
+
+    if (!res.applications || res.applications.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; color: var(--text-muted); padding: 25px;">لا توجد طلبات انضمام جديدة بانتظار المراجعة حالياً ✓</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = res.applications.map(app => {
+      const isPending = app.status === 'PENDING_APPROVAL';
+      const roleText = app.role === 'seller' ? '🏷️ بائع معتمد' : '🚚 كابتن توصيل';
+      const appData = app.application_data || {};
+      const detailSummary = app.role === 'seller'
+        ? `المتجر: ${escapeHTML(appData.shop_name || 'فردي')} | رقم قومي: ${escapeHTML(appData.national_id || '—')} | باقة: ${escapeHTML(appData.tier || '8%')}`
+        : `المركبة: ${escapeHTML(appData.vehicle_type || 'فان')} | اللوحة: ${escapeHTML(appData.vehicle_plate || '—')} | رخصة: ${escapeHTML(appData.license_number || '—')}`;
+
+      return `
+        <tr>
+          <td><strong style="font-family: var(--font-mono); font-size: 12px;">#${escapeHTML(app.id)}</strong></td>
+          <td><span class="role-badge role-${app.role}">${roleText}</span></td>
+          <td><strong>${escapeHTML(app.name)}</strong></td>
+          <td><span style="font-family: var(--font-mono);">${escapeHTML(app.phone)}</span></td>
+          <td><strong>${escapeHTML(app.district || 'الإسكندرية')}</strong></td>
+          <td style="font-size: 12px; color: #475569; max-width: 250px;">${detailSummary}</td>
+          <td style="font-size: 11px; color: #64748B;">${app.created_at ? app.created_at.slice(0, 10) : 'الآن'}</td>
+          <td>
+            <span class="status-pill status-${isPending ? 'pending' : (app.status === 'APPROVED' ? 'active' : 'blocked')}">
+              ${isPending ? 'قيد المراجعة' : (app.status === 'APPROVED' ? 'معتمد ✓' : 'مرفوض ✕')}
+            </span>
+          </td>
+          <td>
+            ${isPending ? `
+              <div style="display: flex; gap: 6px;">
+                <button class="btn-quick-prompt" style="background: #ECFDF5; color: #065F46; font-weight: 800; padding: 4px 8px; font-size: 11px;" onclick="reviewApplication('${app.id}', 'APPROVED')">اعتماد وقبول ✓</button>
+                <button class="btn-quick-prompt" style="background: #FEE2E2; color: #991B1B; font-weight: 800; padding: 4px 8px; font-size: 11px;" onclick="reviewApplication('${app.id}', 'REJECTED')">رفض ✕</button>
+              </div>
+            ` : `<span style="font-size: 11px; color: #64748B;">تم الفحص</span>`}
+          </td>
+        </tr>
+      `;
+    }).join('');
+  } catch (err) {
+    console.error('Failed to load admin applications:', err);
+  }
+}
+window.loadAdminApplications = loadAdminApplications;
+
+async function reviewApplication(appId, action) {
+  try {
+    const res = await apiRequest(`/api/admin/applications/${encodeURIComponent(appId)}/review`, {
+      method: 'POST',
+      body: JSON.stringify({
+        action: action,
+        notes: action === 'APPROVED' ? 'تم الاعتماد الرسمي وتفعيل الصلاحيات من الإدارة' : 'المستندات أو البيانات غير مكتملة'
+      })
+    });
+
+    showToast(
+      action === 'APPROVED' ? 'تم اعتماد الحساب بنجاح' : 'تم رفض الطلب',
+      action === 'APPROVED' ? 'تم فتح الحساب وترقية العضوية وإشعار المستخدم فوراً ✓' : 'تم تسجيل الرفض مع الملاحظة',
+      action === 'APPROVED' ? 'success' : 'warning'
+    );
+
+    loadAdminApplications();
+    loadAdminAnalytics();
+    loadAdminUsers();
+  } catch (err) {
+    showToast('خطأ في المراجعة', err.message, 'error');
+  }
+}
+window.reviewApplication = reviewApplication;
+
+// ------------------ Seller & Driver Onboarding Modals ------------------
+function openSellerApplyModal() {
+  const modal = document.getElementById('modalSellerApply');
+  if (modal) modal.classList.add('active');
+  if (state.currentUser) {
+    const nameInput = document.getElementById('sellerApplyName');
+    const phoneInput = document.getElementById('sellerApplyPhone');
+    if (nameInput && state.currentUser.name) nameInput.value = state.currentUser.name;
+    if (phoneInput && state.currentUser.phone) phoneInput.value = state.currentUser.phone;
+  }
+}
+window.openSellerApplyModal = openSellerApplyModal;
+
+function openDriverApplyModal() {
+  const modal = document.getElementById('modalDriverApply');
+  if (modal) modal.classList.add('active');
+  if (state.currentUser) {
+    const nameInput = document.getElementById('driverApplyName');
+    const phoneInput = document.getElementById('driverApplyPhone');
+    if (nameInput && state.currentUser.name) nameInput.value = state.currentUser.name;
+    if (phoneInput && state.currentUser.phone) phoneInput.value = state.currentUser.phone;
+  }
+}
+window.openDriverApplyModal = openDriverApplyModal;
+
+async function handleSellerApplySubmit(e) {
+  e.preventDefault();
+  const name = document.getElementById('sellerApplyName').value.trim();
+  const phone = document.getElementById('sellerApplyPhone').value.trim();
+  const shop = document.getElementById('sellerApplyShop').value.trim();
+  const bType = document.getElementById('sellerApplyBusinessType').value;
+  const nationalId = document.getElementById('sellerApplyNationalId').value.trim();
+  const district = document.getElementById('sellerApplyDistrict').value;
+  const tier = document.getElementById('sellerApplyTier').value;
+  const payoutAcc = document.getElementById('sellerApplyPayoutAccount').value.trim();
+
+  const userId = state.currentUser?.id || 'USR-' + Math.floor(1000 + Math.random() * 9000);
+
+  try {
+    await apiRequest('/api/applications/apply', {
+      method: 'POST',
+      body: JSON.stringify({
+        user_id: userId,
+        name: name,
+        phone: phone,
+        role: 'seller',
+        district: district,
+        application_data: {
+          shop_name: shop,
+          business_type: bType,
+          national_id: nationalId,
+          tier: tier,
+          payout_account: payoutAcc
+        }
+      })
+    });
+
+    closeModal('modalSellerApply');
+    showToast('تم إرسال طلب البائع', 'طلبك قيد المراجعة والاعتماد من الإدارة المركزية وسيتم إشعارك فور القبول ✓', 'success');
+    checkUserApplicationStatus();
+  } catch (err) {
+    showToast('خطأ في إرسال الطلب', err.message, 'error');
+  }
+}
+window.handleSellerApplySubmit = handleSellerApplySubmit;
+
+async function handleDriverApplySubmit(e) {
+  e.preventDefault();
+  const name = document.getElementById('driverApplyName').value.trim();
+  const phone = document.getElementById('driverApplyPhone').value.trim();
+  const nationalId = document.getElementById('driverApplyNationalId').value.trim();
+  const vehicleType = document.getElementById('driverApplyVehicleType').value;
+  const vehiclePlate = document.getElementById('driverApplyVehiclePlate').value.trim();
+  const license = document.getElementById('driverApplyLicenseNumber').value.trim();
+  const district = document.getElementById('driverApplyDistrict').value;
+  const gpsConsent = document.getElementById('driverApplyGpsConsent').checked;
+
+  if (!gpsConsent) {
+    showToast('تنبيه الأمان', 'الموافقة على مشاركة الموقع الجغرافي الفعلي شرط إلزامي لقبول الكابتن', 'warning');
+    return;
+  }
+
+  const userId = state.currentUser?.id || 'DRV-' + Math.floor(1000 + Math.random() * 9000);
+
+  try {
+    await apiRequest('/api/applications/apply', {
+      method: 'POST',
+      body: JSON.stringify({
+        user_id: userId,
+        name: name,
+        phone: phone,
+        role: 'driver',
+        district: district,
+        application_data: {
+          national_id: nationalId,
+          vehicle_type: vehicleType,
+          vehicle_plate: vehiclePlate,
+          license_number: license,
+          gps_consent_accepted: true
+        }
+      })
+    });
+
+    closeModal('modalDriverApply');
+    showToast('تم إرسال طلب الكابتن', 'طلبك قيد المراجعة لدى الإدارة لتوثيق الرخصة والسيارة واعتماد الحساب 🚚', 'success');
+    checkUserApplicationStatus();
+  } catch (err) {
+    showToast('خطأ في إرسال الطلب', err.message, 'error');
+  }
+}
+window.handleDriverApplySubmit = handleDriverApplySubmit;
+
+async function checkUserApplicationStatus() {
+  if (!state.currentUser) return;
+  const banner = document.getElementById('accAppStatusBanner');
+  const icon = document.getElementById('accAppStatusIcon');
+  const heading = document.getElementById('accAppStatusHeading');
+  const text = document.getElementById('accAppStatusText');
+  const btnAction = document.getElementById('btnAccAppAction');
+  if (!banner) return;
+
+  try {
+    const res = await apiRequest(`/api/applications/my-status?user_id=${encodeURIComponent(state.currentUser.id)}`);
+    if (res.has_application && res.application) {
+      banner.style.display = 'block';
+      const app = res.application;
+      if (app.status === 'PENDING_APPROVAL') {
+        banner.className = 'account-status-banner pending';
+        if (icon) icon.innerText = '⏳';
+        if (heading) heading.innerText = `طلب انضمام ${app.role === 'seller' ? 'بائع معتمد' : 'كابتن توصيل'} (قيد المراجعة)`;
+        if (text) text.innerText = 'طلبك قيد المراجعة من الإدارة المركزية والتحقق من المستندات. سيتم تفعيل حسابك فوراً.';
+        if (btnAction) btnAction.style.display = 'none';
+      } else if (app.status === 'APPROVED') {
+        banner.className = 'account-status-banner approved';
+        if (icon) icon.innerText = '✓';
+        if (heading) heading.innerText = `تهانينا! تم اعتماد حسابك رسميًا كـ ${app.role === 'seller' ? 'بائع معتمد' : 'كابتن توصيل'}`;
+        if (text) text.innerText = 'تم فتح كافة الصلاحيات لبدء البيع أو استقبال مشاوير التوصيل والمعاينة الفورية.';
+        if (btnAction) {
+          btnAction.style.display = 'inline-flex';
+          btnAction.innerText = app.role === 'seller' ? 'استوديو البائع 🏷️' : 'بوابة الكابتن 🚚';
+          btnAction.onclick = () => switchPortalView(app.role === 'seller' ? 'seller' : 'delivery-portal');
+        }
+        // Upgrade local role
+        state.currentUser.role = app.role;
+        localStorage.setItem('antifesal_user', JSON.stringify(state.currentUser));
+      } else if (app.status === 'REJECTED') {
+        banner.className = 'account-status-banner rejected';
+        if (icon) icon.innerText = '✕';
+        if (heading) heading.innerText = 'تم رفض طلب الانضمام';
+        if (text) text.innerText = app.admin_notes || 'يرجى مراجعة البيانات المدخلة وإعادة التقديم مرة أخرى.';
+        if (btnAction) btnAction.style.display = 'none';
+      }
+    } else {
+      banner.style.display = 'none';
+    }
+  } catch (err) {
+    console.warn('Could not check application status:', err);
+  }
+}
+window.checkUserApplicationStatus = checkUserApplicationStatus;
+
+function handleAccAppAction() {
+  if (state.currentUser?.role === 'seller') {
+    switchPortalView('seller');
+  } else if (state.currentUser?.role === 'driver') {
+    switchPortalView('delivery-portal');
+  }
+}
+window.handleAccAppAction = handleAccAppAction;
 
 async function loadAdminUsers() {
   try {

@@ -44,3 +44,23 @@ timestamp,item_id,title,category,quoted_price,reason
 2026-11-17T16:00:17.704086,REL-CORRUPT-03,Corrupt Negative Price Item,Appliances,-500.0,Invalid quoted price (-500.0 <= 0 EGP)
 2026-11-17T16:00:17.704086,REL-CORRUPT-04,Corrupt Zero Price Item,Furniture,0.0,Invalid quoted price (0.0 <= 0 EGP)
 2026-11-17T16:00:17.705103,REL-CORRUPT-05,Corrupt Severe Malformed Item,,-1200.0,Empty category specification
+2026-11-18T16:05:43.034356,REL-CORRUPT-01,Corrupt Empty Category Item,,15000.0,Empty category specification
+2026-11-18T16:05:43.035337,REL-CORRUPT-02,Corrupt Missing Image Item,Electronics,24500.0,Missing product photo/image
+2026-11-18T16:05:43.035337,REL-CORRUPT-03,Corrupt Negative Price Item,Appliances,-500.0,Invalid quoted price (-500.0 <= 0 EGP)
+2026-11-18T16:05:43.035337,REL-CORRUPT-04,Corrupt Zero Price Item,Furniture,0.0,Invalid quoted price (0.0 <= 0 EGP)
+2026-11-18T16:05:43.035337,REL-CORRUPT-05,Corrupt Severe Malformed Item,,-1200.0,Empty category specification
+2026-11-18T16:13:44.278618,REL-CORRUPT-01,Corrupt Empty Category Item,,15000.0,Empty category specification
+2026-11-18T16:13:44.279278,REL-CORRUPT-02,Corrupt Missing Image Item,Electronics,24500.0,Missing product photo/image
+2026-11-18T16:13:44.279907,REL-CORRUPT-03,Corrupt Negative Price Item,Appliances,-500.0,Invalid quoted price (-500.0 <= 0 EGP)
+2026-11-18T16:13:44.279907,REL-CORRUPT-04,Corrupt Zero Price Item,Furniture,0.0,Invalid quoted price (0.0 <= 0 EGP)
+2026-11-18T16:13:44.280672,REL-CORRUPT-05,Corrupt Severe Malformed Item,,-1200.0,Empty category specification
+2026-11-18T17:24:57.671520,REL-CORRUPT-01,Corrupt Empty Category Item,,15000.0,Empty category specification
+2026-11-18T17:24:57.671520,REL-CORRUPT-02,Corrupt Missing Image Item,Electronics,24500.0,Missing product photo/image
+2026-11-18T17:24:57.671520,REL-CORRUPT-03,Corrupt Negative Price Item,Appliances,-500.0,Invalid quoted price (-500.0 <= 0 EGP)
+2026-11-18T17:24:57.672505,REL-CORRUPT-04,Corrupt Zero Price Item,Furniture,0.0,Invalid quoted price (0.0 <= 0 EGP)
+2026-11-18T17:24:57.672505,REL-CORRUPT-05,Corrupt Severe Malformed Item,,-1200.0,Empty category specification
+2026-11-18T18:51:29.350244,REL-CORRUPT-01,Corrupt Empty Category Item,,15000.0,Empty category specification
+2026-11-18T18:51:29.350244,REL-CORRUPT-02,Corrupt Missing Image Item,Electronics,24500.0,Missing product photo/image
+2026-11-18T18:51:29.350244,REL-CORRUPT-03,Corrupt Negative Price Item,Appliances,-500.0,Invalid quoted price (-500.0 <= 0 EGP)
+2026-11-18T18:51:29.350922,REL-CORRUPT-04,Corrupt Zero Price Item,Furniture,0.0,Invalid quoted price (0.0 <= 0 EGP)
+2026-11-18T18:51:29.350922,REL-CORRUPT-05,Corrupt Severe Malformed Item,,-1200.0,Empty category specification

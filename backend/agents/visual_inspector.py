@@ -48,13 +48,17 @@ class VisualInspectorAgent:
         return self._heuristic_fallback(desc, images, declared_category)
 
     def _call_gemini_vision(self, description: str, images: List[str], declared_category: Optional[str]) -> Optional[Dict[str, Any]]:
+        import requests
+        import base64
+
         prompt = f"""
 You are the Lead Visual Inspector for Anti-Fesal (آنتي فصال), an autonomous secondhand re-commerce platform in Alexandria, Egypt.
-Analyze the following secondhand listing:
-Description: {description}
+Analyze the following secondhand listing and any attached product images carefully:
+
+Description (Egyptian Arabic / English): {description}
 Declared Category: {declared_category or 'Auto-detect'}
 
-Return ONLY a strict JSON object with these exact keys:
+Return ONLY a strict JSON object (no markdown, no extra text):
 {{
   "category": "Appliances" | "Electronics" | "Furniture",
   "brand_model": "Identified brand and model string",
@@ -63,53 +67,79 @@ Return ONLY a strict JSON object with these exact keys:
   "confidence_score": 0.00 to 1.00
 }}
 
-RULES:
-1. Grade A: Like-new, pristine condition, no noticeable defects.
-2. Grade B: Good working condition, minor superficial scuffs or light wear.
-3. Grade C: Noticeable wear, scratches, or cosmetic flaws, fully operational.
-4. Grade D: Heavy wear, visible rust/بارومة, cracked parts, or requires repair/maintenance.
-5. Drop confidence_score < 0.80 (e.g. 0.65-0.75) if images are dark/blurry, damage is unclear or ambiguous, or description contradicts visual condition.
-6. If clear and consistent, set confidence_score >= 0.85.
+GRADING RULES:
+- Grade A: Like-new, pristine condition, no noticeable defects → confidence >= 0.85
+- Grade B: Good working condition, minor superficial scuffs or light wear → confidence >= 0.84
+- Grade C: Noticeable wear, scratches, or cosmetic flaws, fully operational → confidence >= 0.82
+- Grade D: Heavy wear, visible rust/بارومة, cracked parts, or requires repair → confidence >= 0.80
+- Drop confidence_score BELOW 0.80 ONLY if images are dark/blurry, damage is unclear, or description contradicts visual condition.
 """
-        # Attempt 1: Official google-genai SDK
+        # Build base64-encoded image parts for the REST call
+        image_parts = []
+        for img_url in images[:4]:
+            if not img_url or not isinstance(img_url, str):
+                continue
+            if img_url.startswith("http://") or img_url.startswith("https://"):
+                try:
+                    img_response = requests.get(img_url, timeout=8)
+                    if img_response.status_code == 200:
+                        b64_data = base64.b64encode(img_response.content).decode("utf-8")
+                        mime = img_response.headers.get("Content-Type", "image/jpeg").split(";")[0]
+                        image_parts.append({"inline_data": {"mime_type": mime, "data": b64_data}})
+                except Exception as img_err:
+                    logger.warning(f"Could not load image {img_url}: {img_err}")
+
+        # Attempt 1: Official google-genai SDK with vision
         try:
             from google import genai
+            from google.genai import types
             client = genai.Client(api_key=self.api_key)
+
+            content_parts = [prompt]
+            for img_url in images[:4]:
+                if not img_url or not isinstance(img_url, str):
+                    continue
+                if img_url.startswith("http://") or img_url.startswith("https://"):
+                    try:
+                        img_res = requests.get(img_url, timeout=8)
+                        if img_res.status_code == 200:
+                            content_parts.append(
+                                types.Part.from_bytes(
+                                    data=img_res.content,
+                                    mime_type=img_res.headers.get("Content-Type", "image/jpeg").split(";")[0]
+                                )
+                            )
+                    except Exception:
+                        pass
+
             response = client.models.generate_content(
-                model='gemini-3.5-flash-lite',
-                contents=prompt
+                model='gemini-1.5-flash',
+                contents=content_parts,
+                config=types.GenerateContentConfig(temperature=0.1, response_mime_type="application/json")
             )
-            raw_text = response.text.strip()
-            # Clean possible markdown fences
-            if raw_text.startswith("```json"):
-                raw_text = raw_text[7:]
-            if raw_text.startswith("```"):
-                raw_text = raw_text[3:]
-            if raw_text.endswith("```"):
-                raw_text = raw_text[:-3]
-            parsed = json.loads(raw_text.strip())
+            raw_text = response.text.strip().strip("```json").strip("```").strip()
+            parsed = json.loads(raw_text)
             return self._normalize_inspection_result(parsed, description, declared_category)
         except Exception as e_sdk:
             logger.info(f"google-genai SDK attempt: {e_sdk}, trying REST fallback...")
 
-        # Attempt 2: Direct Google AI Studio REST call
-        import requests
+        # Attempt 2: Direct REST call with base64 images (most reliable fallback)
         url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={self.api_key}"
+        parts = [{"text": prompt}] + image_parts
         payload = {
-            "contents": [{
-                "parts": [{"text": prompt}]
-            }],
-            "generationConfig": {
-                "temperature": 0.1,
-                "responseMimeType": "application/json"
-            }
+            "contents": [{"parts": parts}],
+            "generationConfig": {"temperature": 0.1, "responseMimeType": "application/json"}
         }
-        res = requests.post(url, json=payload, timeout=8)
-        if res.status_code == 200:
-            data = res.json()
-            raw_text = data["candidates"][0]["content"]["parts"][0]["text"]
-            parsed = json.loads(raw_text)
-            return self._normalize_inspection_result(parsed, description, declared_category)
+        try:
+            res = requests.post(url, json=payload, timeout=15)
+            if res.status_code == 200:
+                data = res.json()
+                raw_text = data["candidates"][0]["content"]["parts"][0]["text"]
+                parsed = json.loads(raw_text.strip().strip("```json").strip("```").strip())
+                return self._normalize_inspection_result(parsed, description, declared_category)
+            logger.error(f"Gemini REST failed: HTTP {res.status_code}: {res.text[:300]}")
+        except Exception as rest_err:
+            logger.error(f"Gemini REST call error: {rest_err}")
         return None
 
     def _heuristic_fallback(self, desc: str, images: List[str], declared_category: Optional[str]) -> Dict[str, Any]:

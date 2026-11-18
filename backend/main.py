@@ -19,6 +19,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel, Field
+import httpx
+from jose import jwt as jose_jwt, JWTError
 
 import sys
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -29,7 +31,8 @@ from config import (
     CONFIDENCE_THRESHOLD, COMMISSION, COMMISSION_PRO, COMMISSION_ENTERPRISE,
     IMAGES_DIR, HAS_DATADOG, HAS_CLERK, HAS_GEMINI, HAS_MONGODB, HAS_APPWRITE,
     DD_API_KEY, DD_SITE, DD_LLMOBS_ENABLED, DD_LLMOBS_ML_APP,
-    AUTOMATION_LOG_CSV, SKIPPED_ITEMS_LOG_CSV, CORRECTIONS_CSV, PRICE_MATRIX_CSV
+    AUTOMATION_LOG_CSV, SKIPPED_ITEMS_LOG_CSV, CORRECTIONS_CSV, PRICE_MATRIX_CSV,
+    CLERK_JWKS_URL
 )
 from backend.db_adapter import db
 from backend.storage_adapter import storage
@@ -64,12 +67,23 @@ app = FastAPI(
     version="2.0.0"
 )
 
+ALLOWED_ORIGINS = [
+    "https://anti-fesal.me",
+    "https://www.anti-fesal.me",
+    "http://localhost:3000",
+    "http://127.0.0.1:8000",
+    "http://localhost:8000",
+    "http://127.0.0.1:5500",
+    "http://localhost:5500",
+    "*"
+]
+
 # CORS middleware for local development and cloud deployments (Vercel / Cloudflare)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 
@@ -87,18 +101,29 @@ def get_current_user_role(
     x_dev_role: Optional[str] = Header(None)
 ) -> Dict[str, Any]:
     """
-    Validates Clerk JWT if configured, or falls back to built-in Dev Role Switcher
-    (seller | merchant | driver).
+    Validates Clerk JWT via JWKS if configured, or falls back to built-in Dev Role Switcher
+    (seller | merchant | driver | admin).
     """
-    if HAS_CLERK and authorization:
-        # In production with Clerk JWT
+    if HAS_CLERK and authorization and authorization.startswith("Bearer "):
+        token = authorization.replace("Bearer ", "").strip()
         try:
-            # Token format: Bearer <jwt>
-            token = authorization.replace("Bearer ", "").strip()
-            # Token validation logic here (falls back gracefully if offline)
-            return {"user_id": "clerk_user_123", "role": "merchant"}
-        except Exception:
-            pass
+            if CLERK_JWKS_URL:
+                jwks_response = httpx.get(CLERK_JWKS_URL, timeout=5)
+                if jwks_response.status_code == 200:
+                    jwks = jwks_response.json()
+                    payload = jose_jwt.decode(
+                        token,
+                        jwks,
+                        algorithms=["RS256"],
+                        options={"verify_aud": False}
+                    )
+                    role = payload.get("public_metadata", {}).get("role", "buyer")
+                    return {"user_id": payload.get("sub", "clerk_user"), "role": role}
+        except JWTError as e:
+            logger.warning(f"Clerk JWT validation failed: {e}")
+            raise HTTPException(status_code=401, detail="Invalid or expired token")
+        except Exception as e:
+            logger.warning(f"Clerk JWKS fetch/validation error: {e}. Falling back to dev role.")
 
     # Dev Role Switcher Fallback
     role = (x_dev_role or "merchant").lower().strip()
@@ -115,6 +140,7 @@ class IntakeRequest(BaseModel):
     seller_tier: str = Field(default="Everyday Seller", example="Everyday Seller")
     image_urls: List[str] = Field(default_factory=list)
     declared_category: Optional[str] = None
+    seller_id: Optional[str] = None
 
 class MerchantReviewRequest(BaseModel):
     action: str = Field(..., example="APPROVE")  # APPROVE, ADJUST, REJECT
@@ -150,6 +176,38 @@ class ChatCompareRequest(BaseModel):
     message: str
     item_id_1: Optional[str] = None
     item_id_2: Optional[str] = None
+
+class ApplicationRequest(BaseModel):
+    role: str = Field(..., example="seller")  # seller or driver
+    name: str = Field(..., example="أحمد محمود السكندري")
+    phone: str = Field(..., example="01012345678")
+    district: str = Field(..., example="Sidi Beshr")
+    national_id: Optional[str] = None
+    shop_name: Optional[str] = None
+    business_type: Optional[str] = "individual"  # individual, workshop, showroom
+    tier: Optional[str] = "Everyday Seller"
+    vehicle_type: Optional[str] = None  # pickup, van, motorcycle
+    vehicle_plate: Optional[str] = None
+    license_number: Optional[str] = None
+    coverage_districts: Optional[List[str]] = Field(default_factory=list)
+    consent_location: bool = True
+
+class ApplicationReviewRequest(BaseModel):
+    action: str = Field(..., example="APPROVE")  # APPROVE, REJECT
+    admin_notes: Optional[str] = None
+
+class DriverLocationUpdateRequest(BaseModel):
+    driver_id: str
+    driver_name: Optional[str] = "كابتن الإسكندرية"
+    lat: float
+    lng: float
+    heading: Optional[float] = 0.0
+    sharing_enabled: bool = True
+
+class DispatchStepUpdateRequest(BaseModel):
+    step: str = Field(..., example="PICKED_UP")  # ORDER_PLACED, DRIVER_ASSIGNED, PICKED_UP, OUT_FOR_DELIVERY, DELIVERED_SETTLED
+    driver_lat: Optional[float] = None
+    driver_lng: Optional[float] = None
 
 class LoginRequest(BaseModel):
     login_type: str = "standard"  # standard, google
@@ -194,10 +252,11 @@ def get_items(
     district: Optional[str] = Query(None),
     status: Optional[str] = Query(None),
     search: Optional[str] = Query(None),
-    limit: int = Query(50)
+    limit: int = Query(50),
+    offset: int = Query(0, ge=0)
 ):
     """Returns listings with optional filtering by category, Alexandria district, status, or search query."""
-    return db.get_items(category=category, district=district, status=status, search=search, limit=limit)
+    return db.get_items(category=category, district=district, status=status, search=search, limit=limit, offset=offset)
 
 @app.get("/api/items/{item_id}")
 def get_item(item_id: str):
@@ -218,7 +277,7 @@ async def upload_image(file: UploadFile = File(...)):
 
 # --- Workflow 1: Intake & Appraisal ---
 @app.post("/api/intake")
-def process_intake(req: IntakeRequest):
+def process_intake(req: IntakeRequest, user: Dict[str, Any] = Depends(get_current_user_role)):
     """Executes Workflow 1 (Agent 1 Visual Inspection + Agent 2 Valuation + Auto-Approval/HITL Triage)."""
     result = workflow_intake.process_intake(
         title=req.title,
@@ -227,7 +286,8 @@ def process_intake(req: IntakeRequest):
         seller_phone=req.seller_phone,
         seller_tier=req.seller_tier,
         image_urls=req.image_urls,
-        declared_category=req.declared_category
+        declared_category=req.declared_category,
+        seller_id=req.seller_id or user.get("user_id")
     )
     return result
 
@@ -472,6 +532,212 @@ def update_driver_status(driver_id: str, req: DriverStatusUpdateRequest):
         raise HTTPException(status_code=404, detail="Driver not found")
     return {"status": req.status, "message": f"Driver status updated to {req.status}"}
 
+# --- Onboarding Applications: Seller & Driver Verification Desk ---
+@app.post("/api/applications/apply")
+def submit_application(req: ApplicationRequest, user: Dict[str, Any] = Depends(get_current_user_role)):
+    """Submits a seller or delivery driver verification application."""
+    user_id = user.get("user_id") or f"USR-{int(time.time()) % 10000}"
+    app_data = {
+        "user_id": user_id,
+        "name": req.name,
+        "phone": req.phone,
+        "role": req.role.lower(),
+        "district": req.district,
+        "application_data": {
+            "national_id": req.national_id,
+            "shop_name": req.shop_name,
+            "business_type": req.business_type,
+            "tier": req.tier,
+            "vehicle_type": req.vehicle_type,
+            "vehicle_plate": req.vehicle_plate,
+            "license_number": req.license_number,
+            "coverage_districts": req.coverage_districts or [req.district],
+            "consent_location": req.consent_location
+        },
+        "status": "PENDING_APPROVAL"
+    }
+    app_id = db.create_application(app_data)
+    log_automation("APPLICATION_SUBMITTED", app_id, 0.0, "PENDING", f"Role: {req.role}, User: {req.name}")
+    return {
+        "success": True,
+        "id": app_id,
+        "application_id": app_id,
+        "status": "PENDING_APPROVAL",
+        "message": "تم استلام طلب التحقق بنجاح! سيقوم مسؤول النظام بمراجعته وتفعيل حسابك خلال دقائق."
+    }
+
+@app.get("/api/applications/my-status")
+def get_my_application_status(user: Dict[str, Any] = Depends(get_current_user_role)):
+    """Checks current user's seller or driver onboarding application status."""
+    user_id = user.get("user_id")
+    if not user_id:
+        return {"has_application": False}
+    app = db.get_application_by_user(user_id)
+    if not app:
+        return {"has_application": False}
+    return {"has_application": True, "application": app}
+
+@app.get("/api/admin/applications")
+def get_admin_applications(status: Optional[str] = Query(None), role: Optional[str] = Query(None)):
+    """Lists pending or reviewed seller & driver applications."""
+    apps = db.get_applications(status=status, role=role, limit=100)
+    return {"applications": apps, "count": len(apps)}
+
+@app.post("/api/admin/applications/{app_id}/review")
+def review_application(app_id: str, req: ApplicationReviewRequest):
+    """Admin endpoint to approve or reject a seller/driver application."""
+    status = "APPROVED" if req.action.upper() in ["APPROVE", "APPROVED"] else "REJECTED"
+    success = db.review_application(app_id, status, req.admin_notes)
+    if not success:
+        raise HTTPException(status_code=404, detail="Application not found")
+    log_automation("APPLICATION_REVIEW", app_id, 0.0, status, f"Decision: {status}, Notes: {req.admin_notes}")
+    app_record = db.get_application_by_id(app_id) or {"id": app_id, "status": status}
+    return {
+        "status": status,
+        "application": app_record,
+        "message": f"تم {'قبول واعتماد' if status == 'APPROVED' else 'رفض'} الطلب بنجاح وتحديث صلاحيات المستخدم."
+    }
+
+# --- Real-time Driver GPS & Live Delivery Map Tracking ---
+ALEXANDRIA_DISTRICT_COORDS = {
+    "El-Attarine": {"lat": 31.1965, "lng": 29.9052},
+    "El-Mansheya": {"lat": 31.2023, "lng": 29.8974},
+    "Sidi Beshr": {"lat": 31.2652, "lng": 30.0051},
+    "Moharam Bek": {"lat": 31.1884, "lng": 29.9205},
+    "Smouha": {"lat": 31.2156, "lng": 29.9554},
+    "Miami": {"lat": 31.2721, "lng": 30.0152},
+    "Loran": {"lat": 31.2484, "lng": 29.9804},
+    "Gleem": {"lat": 31.2405, "lng": 29.9702},
+    "Roushdy": {"lat": 31.2301, "lng": 29.9508}
+}
+
+@app.post("/api/driver/location")
+def update_driver_location(req: DriverLocationUpdateRequest):
+    """Driver streams their real-time device GPS coordinates."""
+    success = db.update_driver_location(
+        driver_id=req.driver_id,
+        driver_name=req.driver_name or "كابتن الإسكندرية",
+        lat=req.lat,
+        lng=req.lng,
+        heading=req.heading or 0.0,
+        sharing_enabled=req.sharing_enabled
+    )
+    return {"success": success, "status": "LOCATION_UPDATED", "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
+
+@app.post("/api/dispatches/{dispatch_id}/step")
+def update_dispatch_step(dispatch_id: str, req: DispatchStepUpdateRequest):
+    """Updates the 5-step delivery road (ORDER_PLACED -> DRIVER_ASSIGNED -> PICKED_UP -> OUT_FOR_DELIVERY -> DELIVERED_SETTLED)."""
+    success = db.update_dispatch_step(dispatch_id, req.step, req.driver_lat, req.driver_lng)
+    if not success:
+        raise HTTPException(status_code=404, detail="Dispatch not found")
+    log_automation("DELIVERY_STEP_UPDATE", dispatch_id, 0.0, req.step, f"Step updated to {req.step}")
+    return {
+        "status": req.step,
+        "current_step": req.step,
+        "step_message": f"تم تحديث مرحلة الشحنة إلى: {req.step}",
+        "message": f"تم تحديث مرحلة الشحنة إلى: {req.step}"
+    }
+
+@app.get("/api/dispatches/{dispatch_id}/live-tracking")
+def get_live_dispatch_tracking(dispatch_id: str):
+    """Returns live driver position, pickup/destination points, current step, and live ETA."""
+    dispatches = db.get_dispatches(limit=100)
+    matched = next((d for d in dispatches if d.get("id") == dispatch_id or d.get("deal_id") == dispatch_id or d.get("item_id") == dispatch_id), None)
+    if not matched:
+        raise HTTPException(status_code=404, detail="Dispatch record not found")
+
+    item_id = matched.get("item_id")
+    item = db.get_item_by_id(item_id) if item_id else None
+
+    pickup_district = matched.get("district") or (item.get("district") if item else "El-Attarine")
+    delivery_district = "Sidi Beshr" if pickup_district != "Sidi Beshr" else "Smouha"
+
+    pickup_coords = ALEXANDRIA_DISTRICT_COORDS.get(pickup_district, {"lat": 31.1965, "lng": 29.9052})
+    delivery_coords = ALEXANDRIA_DISTRICT_COORDS.get(delivery_district, {"lat": 31.2652, "lng": 30.0051})
+
+    current_step = matched.get("current_step") or "DRIVER_ASSIGNED"
+    
+    # Calculate simulated or live driver coordinates between pickup and destination
+    driver_lat = matched.get("driver_lat")
+    driver_lng = matched.get("driver_lng")
+    if driver_lat is None or driver_lng is None:
+        # Interpolate realistic position based on current step
+        if current_step == "ORDER_PLACED":
+            driver_lat, driver_lng = pickup_coords["lat"], pickup_coords["lng"]
+        elif current_step == "DRIVER_ASSIGNED":
+            driver_lat = pickup_coords["lat"] - 0.005
+            driver_lng = pickup_coords["lng"] - 0.005
+        elif current_step == "PICKED_UP":
+            driver_lat, driver_lng = pickup_coords["lat"], pickup_coords["lng"]
+        elif current_step == "OUT_FOR_DELIVERY":
+            driver_lat = (pickup_coords["lat"] + delivery_coords["lat"]) / 2
+            driver_lng = (pickup_coords["lng"] + delivery_coords["lng"]) / 2
+        else: # DELIVERED_SETTLED
+            driver_lat, driver_lng = delivery_coords["lat"], delivery_coords["lng"]
+
+    # Calculate distance & realistic Alexandria ETA
+    import math
+    dist_km = math.sqrt((driver_lat - delivery_coords["lat"])**2 + (driver_lng - delivery_coords["lng"])**2) * 111.0
+    eta_minutes = max(5, int(dist_km * 3.5)) if current_step != "DELIVERED_SETTLED" else 0
+
+    step_messages = {
+        "ORDER_PLACED": "تم تأكيد الحجز وإخطار المندوب بالمعاينة.",
+        "DRIVER_ASSIGNED": f"تم تعيين {matched.get('driver_name', 'الكابتن')} لمهمة الاستلام.",
+        "PICKED_UP": f"الكابتن استلم السلعة من البائع وسلّمه الكاش الفوري — في الطريق للمعاينة!",
+        "OUT_FOR_DELIVERY": f"الكابتن في نطاق حي {delivery_district} — متبقي {eta_minutes} دقيقة على الوصول.",
+        "DELIVERED_SETTLED": "تمت المعاينة ودفع الكاش بنجاح وإغلاق الصفقة قطيعاً بدون فصال."
+    }
+
+    return {
+        "dispatch_id": matched.get("id"),
+        "deal_id": matched.get("deal_id"),
+        "item_id": item_id,
+        "item_title": item.get("title") if item else "سلعة معتمدة بالإسكندرية",
+        "current_step": current_step,
+        "step_message": step_messages.get(current_step, "الشحنة قيد المتابعة الحية"),
+        "driver": {
+            "name": matched.get("driver_name", "كابتن أحمد الإسكندراني"),
+            "phone": matched.get("driver_phone", "01234567890"),
+            "vehicle": matched.get("driver_vehicle", "فان بيك أب مجهز"),
+            "lat": driver_lat,
+            "lng": driver_lng
+        },
+        "locations": {
+            "pickup": {
+                "name": f"موقع الاستلام ({pickup_district})",
+                "lat": pickup_coords["lat"],
+                "lng": pickup_coords["lng"]
+            },
+            "delivery": {
+                "name": f"عنوان المعاينة والتسليم ({delivery_district})",
+                "lat": delivery_coords["lat"],
+                "lng": delivery_coords["lng"]
+            }
+        },
+        "pickup_coords": pickup_coords,
+        "delivery_coords": delivery_coords,
+        "driver_coords": {"lat": driver_lat, "lng": driver_lng},
+        "eta_minutes": eta_minutes,
+        "calculated_eta_mins": eta_minutes,
+        "payout_cash": matched.get("payout_cash", 0.0)
+    }
+
+# --- Dedicated Admin Analytics Dashboard ---
+@app.get("/api/admin/analytics")
+def get_admin_analytics():
+    """Returns analytics: sold count, top categories, top Alexandria districts, and platform revenue."""
+    raw = db.get_admin_analytics()
+    return {
+        **raw,
+        "orders_sold_count": raw.get("total_orders_sold", 0),
+        "top_locations": raw.get("top_districts", []),
+        "financials": {
+            "gmv": raw.get("total_gmv", 0.0),
+            "platform_net_commission": raw.get("platform_net_commission", 0.0),
+            "driver_payouts": raw.get("driver_cash_payouts", 0.0)
+        }
+    }
+
 # --- Auth: Login & Register ---
 @app.post("/api/auth/login")
 def auth_login(req: LoginRequest):
@@ -521,34 +787,24 @@ def auth_login(req: LoginRequest):
 
 @app.post("/api/auth/register")
 def auth_register(req: RegisterRequest):
-    """Registers a new user into the platform database."""
+    """Registers a new user into the platform database using the db adapter."""
     new_user_id = f"USR-{int(time.time()) % 10000}"
-    new_user = (
-        new_user_id,
-        req.name,
-        req.username,
-        req.email,
-        req.role,
-        req.district,
-        req.phone,
-        "ACTIVE",
-        0,
-        0.0,
-        time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
-    )
-    with db._sqlite_lock:
-        conn = db._get_sqlite_conn()
-        cursor = conn.cursor()
-        try:
-            cursor.execute("""
-            INSERT INTO users (id, name, username, email, role, district, phone, status, orders_count, total_volume, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, new_user)
-            conn.commit()
-        except Exception as e:
-            conn.close()
-            raise HTTPException(status_code=400, detail="اسم المستخدم أو البريد مسجل مسبقاً")
-        conn.close()
+    new_user = {
+        "id": new_user_id,
+        "name": req.name,
+        "username": req.username,
+        "email": req.email,
+        "role": req.role,
+        "district": req.district,
+        "phone": req.phone,
+        "status": "ACTIVE",
+        "orders_count": 0,
+        "total_volume": 0.0,
+        "created_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    }
+    success = db.create_user(new_user)
+    if not success:
+        raise HTTPException(status_code=400, detail="اسم المستخدم أو البريد مسجل مسبقاً")
 
     return {
         "success": True,
@@ -564,20 +820,34 @@ def auth_register(req: RegisterRequest):
 
 # --- Account Data Endpoint: Category-Specific Details ---
 @app.get("/api/user/account-data")
-def get_user_account_data(user_id: Optional[str] = Query(None), role: Optional[str] = Query("buyer")):
-    """Returns role-specific profile information and relevant records (seller, buyer, delivery)."""
+def get_user_account_data(
+    user_id: Optional[str] = Query(None),
+    role: Optional[str] = Query("buyer"),
+    user: Dict[str, Any] = Depends(get_current_user_role)
+):
+    """Returns role-specific profile information using authenticated user."""
+    actual_user_id = user_id or user.get("user_id", "")
     items = db.get_items(limit=100)
     deals = db.get_deals(limit=100)
     dispatches = db.get_dispatches(limit=100)
 
     # 1. Seller items
-    seller_items = [it for it in items if it.get("seller_phone") == "01012345671" or it.get("status") in ("AUTO_APPROVED", "PENDING_REVIEW")][:5]
+    seller_items = [
+        it for it in items
+        if it.get("seller_id") == actual_user_id or (not it.get("seller_id") and it.get("seller_phone") == "01012345671")
+    ][:5]
+    if not seller_items:
+        seller_items = [it for it in items if it.get("status") in ("AUTO_APPROVED", "PENDING_REVIEW")][:5]
 
     # 2. Buyer reservations
-    buyer_deals = deals[:4]
+    buyer_deals = [d for d in deals if d.get("buyer_id") == actual_user_id][:4]
+    if not buyer_deals:
+        buyer_deals = deals[:4]
 
     # 3. Delivery driver trips
-    driver_trips = dispatches[:6]
+    driver_trips = [d for d in dispatches if d.get("driver_id") == actual_user_id][:6]
+    if not driver_trips:
+        driver_trips = dispatches[:6]
 
     return {
         "seller_data": {

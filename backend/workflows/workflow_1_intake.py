@@ -28,7 +28,8 @@ class IntakeWorkflow:
     def process_intake(self, title: str, description: str, district: str,
                        seller_phone: str, seller_tier: str = "Everyday Seller",
                        image_urls: Optional[List[str]] = None,
-                       declared_category: Optional[str] = None) -> Dict[str, Any]:
+                       declared_category: Optional[str] = None,
+                       seller_id: Optional[str] = None) -> Dict[str, Any]:
         """
         Executes end-to-end seller intake workflow:
         1. Agent 1 visual inspection + defect & grade scoring
@@ -82,6 +83,7 @@ class IntakeWorkflow:
             "district": district,
             "seller_phone": seller_phone,
             "seller_tier": seller_tier,
+            "seller_id": seller_id or "",
             "image_urls": images,
             "condition_grade": condition_grade,
             "detected_defects": defects,

@@ -3,8 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#E00000">
+  <meta name="description" content="آنتي فصال - أول منصة مصرية ذكية لتسعير وبيع السلع المستعملة بدون فصال في الإسكندرية">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="manifest" href="/manifest.json">
   <title>آنتي فصال (Anti-Fesal) — سعّر، بيع، ومن غير وجع فصال | الإسكندرية</title>
   <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <link rel="icon" type="image/png" href="/logo.png">
 </head>
 <body>
@@ -44,12 +52,29 @@
         </div>
       </div>
 
-      <!-- Right Cluster: Sell CTA, Dark Mode, Language Symbol, and Upper Right Account Button -->
+      <!-- Right Cluster: Role Apply CTAs, Sell CTA, Admin Gateway, Theme, Lang, and Account Button -->
       <div class="header-right">
+        <!-- Seller Application Shortcut -->
+        <button id="btnHeaderApplySeller" class="btn-role-apply seller-apply-btn" onclick="openSellerApplyModal()" title="انضم كبائع معتمد في أسواق الإسكندرية">
+          <span>🏷️</span>
+          <span id="txtHeaderApplySeller">انضم كبائع</span>
+        </button>
+
+        <!-- Driver Application Shortcut -->
+        <button id="btnHeaderApplyDriver" class="btn-role-apply driver-apply-btn" onclick="openDriverApplyModal()" title="انضم لأسطول كباتن آنتي فصال بالإسكندرية">
+          <span>🚚</span>
+          <span id="txtHeaderApplyDriver">انضم كمندوب</span>
+        </button>
+
         <!-- Sell CTA Button -->
-        <button id="btnHeaderSellCta" class="btn-crimson-cta header-sell-btn" onclick="switchPortalView('seller')">
+        <button id="btnHeaderSellCta" class="btn-crimson-cta header-sell-btn" onclick="handleHeaderSellClick()">
           <span>+</span>
           <span id="txtHeaderSellCta">سعّر وبِع بالذكاء الاصطناعي</span>
+        </button>
+
+        <!-- Admin Gateway Shortcut Pill -->
+        <button id="btnHeaderAdminGate" class="header-util-btn admin-pill-btn" onclick="switchPortalView('admin-portal')" title="بوابة الإدارة المركزية والرقابة (PIN: ADMIN-2026)">
+          <span>🔐</span>
         </button>
 
         <!-- Dark Mode Switcher -->
@@ -69,6 +94,29 @@
         </button>
       </div>
     </div>
+
+    <!-- Navigation Tabs Bar (100% Dedicated to the Buyer) -->
+    <nav class="nav-portal-tabs" aria-label="Buyer Navigation">
+      <div class="portal-nav-container">
+        <button class="nav-tab active" data-view="showroom" id="tabShowroom" onclick="switchPortalView('showroom')">
+          <span class="nav-tab-icon">🛍️</span>
+          <span class="nav-tab-text" id="txtTabShowroom">المعرض المعتمد (المشتري)</span>
+          <span class="badge-count" id="countShowroom">0</span>
+        </button>
+        <button class="nav-tab" data-view="tracking" id="tabTracking" onclick="switchPortalView('tracking')">
+          <span class="nav-tab-icon">🚚</span>
+          <span class="nav-tab-text" id="txtTabTracking">تتبع الشحنة والخريطة الحية</span>
+        </button>
+        <button class="nav-tab" data-view="price-index" id="tabPriceIndex" onclick="switchPortalView('price-index')">
+          <span class="nav-tab-icon">📊</span>
+          <span class="nav-tab-text" id="txtTabPriceIndex">مؤشر الأسعار العادلة</span>
+        </button>
+        <button class="nav-tab" data-view="about" id="tabAbout" onclick="switchPortalView('about')">
+          <span class="nav-tab-icon">ℹ️</span>
+          <span class="nav-tab-text" id="txtTabAbout">عن المنصة وضمان المعاينة</span>
+        </button>
+      </div>
+    </nav>
   </header>
 
   <!-- Main Application Body -->
@@ -617,18 +665,30 @@
       </div>
 
       <div id="trackingResultArea" class="tracking-result-container" style="display: none;">
-        <!-- Left: 4-Step Stepper -->
+        <!-- Top Live Notification Banner for Buyer -->
+        <div id="trackNotificationBanner" class="track-pickup-alert" style="display: none; grid-column: 1 / -1;">
+          <div style="font-size: 26px;">🚚</div>
+          <div style="flex: 1;">
+            <div style="font-size: 15px; font-weight: 900; color: #065F46;">إشعار استلام الشحنة (Live Delivery Update)</div>
+            <div id="trackNotificationText" style="font-size: 13px; color: #047857; margin-top: 2px;">
+              الكابتن استلم السلعة من البائع وسلّمه الكاش الفوري، وهو الآن في الطريق إلى عنوانك للمعاينة والتجربة!
+            </div>
+          </div>
+          <span class="live-pulse-badge">مباشر الآن 🟢</span>
+        </div>
+
+        <!-- Left: 5-Step Realtime Stepper Road -->
         <div class="tracking-stepper-box">
           <div class="section-title-bar">
             <div>
-              <h3 class="section-title" id="trackHeaderTitle">📍 مسار استلام ومعاينة الشحنة</h3>
+              <h3 class="section-title" id="trackHeaderTitle">🛣️ مسار استلام وتوصيل الشحنة (Delivery Road)</h3>
               <div id="trackHeaderMeta" style="font-size: 12px; color: #64748B; font-family: var(--font-mono); margin-top: 2px;"></div>
             </div>
             <span class="receipt-status-pill auto-approved" id="trackStatusBadge">جارية</span>
           </div>
 
           <div class="stepper" id="trackStepper">
-            <!-- Dynamically generated stepper nodes -->
+            <!-- Dynamically generated 5-step nodes -->
           </div>
         </div>
 
@@ -658,6 +718,28 @@
               <span id="trackItemPrice" style="font-size: 18px; font-weight: 900; color: var(--crimson-primary); font-family: var(--font-arabic);">14,500 ج.م</span>
             </div>
             <div style="font-size: 11px; color: var(--grade-emerald); font-weight: 700;">✓ السعر قطعي ومثبت بدون وجع فصال</div>
+          </div>
+        </div>
+
+        <!-- Full Width: Realtime Leaflet Live Map Card -->
+        <div class="tracking-map-card" style="grid-column: 1 / -1; margin-top: 8px;">
+          <div class="section-title-bar" style="margin-bottom: 10px;">
+            <div>
+              <h3 class="section-title" style="font-size: 16px;">🗺️ الخريطة التفاعلية الحية لخط سير الكابتن (Live Driver Map)</h3>
+              <p style="font-size: 12px; color: #64748B;">تتبع مباشر لحركة الكابتن بين نقطة الاستلام وعنوان المعاينة عبر الـ GPS في شوارع الإسكندرية.</p>
+            </div>
+            <div style="display: flex; gap: 10px; align-items: center;">
+              <span class="map-eta-badge" id="trackEtaBadge">⏳ جاري حساب وقت الوصول...</span>
+              <button type="button" class="btn-quick-prompt" onclick="refreshLiveTrackingMap()" style="padding: 6px 12px; font-size: 12px;">تحديث الموقع 🔄</button>
+            </div>
+          </div>
+          <!-- Leaflet Map Container -->
+          <div id="liveTrackingMap" class="live-tracking-map-container" style="height: 380px; width: 100%; border-radius: var(--radius-md); border: 1px solid var(--border-color); position: relative; z-index: 1;"></div>
+          
+          <div class="map-legend-row" style="display: flex; gap: 20px; font-size: 12px; margin-top: 10px; padding: 8px 12px; background: #F8FAFC; border-radius: 6px; color: #475569; flex-wrap: wrap;">
+            <div>🏪 <strong>نقطة الاستلام (البائع):</strong> <span id="mapLegendSeller">العطارين</span></div>
+            <div>🚚 <strong>موقع الكابتن المباشر:</strong> <span id="mapLegendDriver">على كورنيش الإسكندرية</span></div>
+            <div>🏠 <strong>عنوان المعاينة (المشتري):</strong> <span id="mapLegendBuyer">سيدي بشر</span></div>
           </div>
         </div>
       </div>
@@ -801,6 +883,20 @@
 
         <!-- Main Account Content Pane -->
         <div class="account-main-content">
+          <!-- Application Status / Approval Notification Banner -->
+          <div id="accAppStatusBanner" class="account-status-banner" style="display: none; margin-bottom: 20px; padding: 14px 18px; border-radius: var(--radius-md); font-size: 13px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <span id="accAppStatusIcon" style="font-size: 24px;">⏳</span>
+                <div>
+                  <strong id="accAppStatusHeading">حالة طلب الانضمام</strong>
+                  <div id="accAppStatusText" style="margin-top: 2px;">طلبك قيد المراجعة لدى الإدارة المركزية.</div>
+                </div>
+              </div>
+              <button id="btnAccAppAction" class="btn-quick-prompt" style="display: none;" onclick="handleAccAppAction()">فتح البوابة 🚀</button>
+            </div>
+          </div>
+
           <!-- 1. Sub-tab: Information & Overview -->
           <div id="tabAcc_info" class="account-sub-tab">
             <div class="section-title-bar">
@@ -1068,6 +1164,22 @@
           </div>
         </div>
 
+        <!-- Live Driver GPS Streaming Control -->
+        <div class="driver-gps-card" style="background: #F0FDF4; border: 1px solid #86EFAC; border-radius: var(--radius-md); padding: 16px; margin: 16px 0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+          <div>
+            <div style="font-size: 15px; font-weight: 800; color: #166534; display: flex; align-items: center; gap: 8px;">
+              <span>📡 بث الموقع الجغرافي الفعلي للكابتن (Live GPS Sharing)</span>
+              <span id="driverGpsBadge" class="status-pill status-pending" style="font-size: 11px;">متوقف 🔴</span>
+            </div>
+            <p style="font-size: 12px; color: #15803D; margin-top: 4px;">
+              مشاركة موقعك الفعلي شرط أساسي لتمكين المشترين والإدارة من تتبع خط سير الرحلة وحساب وقت الوصول الدقيق.
+            </p>
+          </div>
+          <button id="btnToggleDriverGps" class="btn-crimson-cta" onclick="toggleDriverGpsSharing()" style="padding: 10px 20px; font-size: 13px;">
+            <span>📍 تفعيل بث الموقع المباشر (GPS)</span>
+          </button>
+        </div>
+
         <div class="data-table-wrapper" style="margin-top: 18px;">
           <table class="custom-table">
             <thead>
@@ -1121,27 +1233,95 @@
           <button class="btn-quick-prompt" style="background-color: #FEE2E2; color: #DC2626;" onclick="lockAdminGate()">قفل لوحة الإدارة 🔒</button>
         </div>
 
-        <!-- 1. Money Summary KPIs & Visual Graph -->
+        <!-- 1. Money & Business Summary KPIs (The 4 Core Platform Metrics) -->
         <div class="admin-kpi-grid">
+          <div class="metric-card">
+            <div class="metric-title">🛒 إجمالي الصفقات المنفذة (Orders Sold)</div>
+            <div class="metric-value" style="color: var(--crimson-primary);" id="admOrdersSoldCount">0</div>
+            <div class="metric-subtitle">سلعة بيعت وسُلمت بدون فصال</div>
+          </div>
           <div class="metric-card">
             <div class="metric-title">💵 إجمالي حجم التداول (GMV)</div>
             <div class="metric-value" id="admTotalGmv">0 ج.م</div>
-            <div class="metric-subtitle">صفقات معتمدة ومثبتة السعر</div>
+            <div class="metric-subtitle">قيمة الصفقات المحققة بالسعر القطعي</div>
           </div>
           <div class="metric-card">
-            <div class="metric-title">📈 صافي عمولات المنصة (8%/5%/3%)</div>
+            <div class="metric-title">📈 صافي أرباح وعمولات آنتي فصال</div>
             <div class="metric-value" style="color: var(--grade-emerald);" id="admNetRevenue">0 ج.م</div>
-            <div class="metric-subtitle">إيرادات الوساطة المباشرة المحصلة</div>
+            <div class="metric-subtitle">إيرادات الوساطة المحصلة (3% إلى 8%)</div>
           </div>
           <div class="metric-card">
-            <div class="metric-title">🚚 إجمالي مدفوعات كاش المناديب</div>
+            <div class="metric-title">🚚 إجمالي مدفوعات كاش البائعين</div>
             <div class="metric-value" style="color: #2563EB;" id="admDriverPayouts">0 ج.م</div>
-            <div class="metric-subtitle">مستحقات البائعين المسلمة فوراً</div>
+            <div class="metric-subtitle">مستحقات البائعين المسلمة فوراً يد بيد</div>
           </div>
-          <div class="metric-card">
-            <div class="metric-title">👥 المستخدمين النشطين / المحظورين</div>
-            <div class="metric-value" id="admUserRatio">0 / 0</div>
-            <div class="metric-subtitle">رقابة تلقائية ضد المماطلين</div>
+        </div>
+
+        <!-- 2. Dual Breakdown: Top Product Categories & Top Buying Locations -->
+        <div class="admin-breakdown-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; margin-top: 18px;">
+          <!-- Top Product Types Card -->
+          <div class="admin-chart-box" style="margin: 0;">
+            <div class="section-title-bar" style="margin-bottom: 10px;">
+              <div>
+                <h3 style="font-size: 15px; font-weight: 800; color: var(--text-main);">🏷️ أكثر أنواع السلع مبيعاً (Top Product Types)</h3>
+                <p style="font-size: 12px; color: var(--text-muted);">نسبة مبيعات الأجهزة المنزلية، الإلكترونيات، وأثاث العطارين.</p>
+              </div>
+            </div>
+            <div id="admTopCategoriesList" class="breakdown-list">
+              <!-- Dynamically populated via JS -->
+              <div style="text-align: center; color: var(--text-muted); padding: 15px;">جاري تحميل إحصائيات الأقسام...</div>
+            </div>
+          </div>
+
+          <!-- Top Buying Alexandria Locations Card -->
+          <div class="admin-chart-box" style="margin: 0;">
+            <div class="section-title-bar" style="margin-bottom: 10px;">
+              <div>
+                <h3 style="font-size: 15px; font-weight: 800; color: var(--text-main);">📍 أكثر مناطق الإسكندرية شراءً (Top Buying Locations)</h3>
+                <p style="font-size: 12px; color: var(--text-muted);">ترتيب أحياء الإسكندرية حسب كثافة الطلبات والحجوزات المؤكدة.</p>
+              </div>
+            </div>
+            <div id="admTopDistrictsList" class="breakdown-list">
+              <!-- Dynamically populated via JS -->
+              <div style="text-align: center; color: var(--text-muted); padding: 15px;">جاري تحميل إحصائيات الأحياء...</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. Seller & Driver Application Verification Desk -->
+        <div class="dashboard-section" style="margin-top: 24px;">
+          <div class="section-title-bar">
+            <div>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <h3 class="section-title">🛡️ طابور فحص واعتماد طلبات البائعين والمناديب (Verification Desk)</h3>
+                <span class="badge-count" id="badgePendingApps">0</span>
+              </div>
+              <p style="font-size: 13px; color: var(--text-muted);">مراجعة مستندات الانضمام، السجل التجاري، رخص القيادة، وموافقة تتبع الـ GPS لفتح الحسابات.</p>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <button class="btn-quick-prompt" onclick="loadAdminApplications()">تحديث الطلبات 🔄</button>
+            </div>
+          </div>
+
+          <div class="data-table-wrapper" style="margin-top: 12px;">
+            <table class="custom-table">
+              <thead>
+                <tr>
+                  <th>كود الطلب</th>
+                  <th>نوع الطلب</th>
+                  <th>الاسم الكامل</th>
+                  <th>رقم الهاتف</th>
+                  <th>الحي الرئيسي</th>
+                  <th>بيانات النشاط / المركبة / الرقم القومي</th>
+                  <th>تاريخ التقديم</th>
+                  <th>الحالة</th>
+                  <th>إجراء الاعتماد</th>
+                </tr>
+              </thead>
+              <tbody id="tbodyAdminApplications">
+                <!-- Dynamically populated via JS -->
+              </tbody>
+            </table>
           </div>
         </div>
 
@@ -1439,6 +1619,173 @@
     </div>
   </div>
 
+  <!-- Modal 6: Seller Application Modal (KYC & Verification) -->
+  <div class="modal-overlay" id="modalSellerApply">
+    <div class="modal-content" style="max-width: 520px;">
+      <button class="modal-close" onclick="closeModal('modalSellerApply')">✕</button>
+      <div style="text-align: center; margin-bottom: 16px;">
+        <span style="font-size: 38px;">🏷️</span>
+        <h3 style="font-size: 20px; font-weight: 900; color: var(--text-main); margin-top: 6px;">طلب انضمام بائع معتمد (Seller Application)</h3>
+        <p style="font-size: 13px; color: var(--text-muted); line-height: 1.5;">
+          انضم لشبكة البائعين المعتمدين في الإسكندرية. بيع بالذكاء الاصطناعي وبدون وجع فصال مع استلام الكاش الفوري عند باب بيتك أو محلك.
+        </p>
+      </div>
+
+      <form id="sellerApplyForm" onsubmit="handleSellerApplySubmit(event)">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">الاسم الكامل (أو اسم الممثل التجاري) *</label>
+            <input type="text" id="sellerApplyName" class="form-input-full" placeholder="مثال: يوسف الشناوي" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">رقم الهاتف والواتساب *</label>
+            <input type="tel" id="sellerApplyPhone" class="form-input-full" placeholder="01012345678" required>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">اسم المتجر / المعرض / الورشة *</label>
+            <input type="text" id="sellerApplyShop" class="form-input-full" placeholder="مثال: معرض الوفاء للأجهزة أو أثاث العطارين" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">نوع النشاط التجاري *</label>
+            <select id="sellerApplyBusinessType" class="form-input-full" required>
+              <option value="individual">بائع أفراد (Everyday Individual)</option>
+              <option value="workshop">ورشة تصنيع وتجديد (Workshop)</option>
+              <option value="showroom">معرض تجاري معتمد (Showroom)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">الرقم القومي أو السجل التجاري *</label>
+            <input type="text" id="sellerApplyNationalId" class="form-input-full" placeholder="14 رقم قومي أو رقم السجل" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">حي الاستلام الرئيسي بالإسكندرية *</label>
+            <select id="sellerApplyDistrict" class="form-input-full" required>
+              <option value="Sidi Beshr">سيدي بشر</option>
+              <option value="El-Attarine">العطارين</option>
+              <option value="El-Mansheya">المنشية</option>
+              <option value="Smouha">سموحة</option>
+              <option value="Moharam Bek">محرم بك</option>
+              <option value="Miami">ميامي</option>
+              <option value="Loran">لوران</option>
+              <option value="Gleem">جليم</option>
+              <option value="Roushdy">رشدي</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">باقة العمولة المفضلة *</label>
+            <select id="sellerApplyTier" class="form-input-full" required>
+              <option value="everyday">باقة الأفراد العادية (عمولة 8% فقط عند البيع)</option>
+              <option value="pro">باقة التاجر المحترف (عمولة 5% + أولوية الفحص)</option>
+              <option value="enterprise">باقة المعارض الكبرى (عمولة 3% + استوديو تسويق كامل)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">محفظة فودافون كاش / حساب الاستلام *</label>
+            <input type="text" id="sellerApplyPayoutAccount" class="form-input-full" placeholder="رقم كاش لاستلام الأرباح فوراً" required>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-top: 6px;">
+          <label style="display: flex; align-items: flex-start; gap: 8px; font-size: 12px; color: var(--text-muted); cursor: pointer;">
+            <input type="checkbox" id="sellerApplyAgreement" required style="margin-top: 3px;">
+            <span>أقر بصحة البيانات المعروضة وأوافق على سياسة الأسعار القطعية وتفويض كباتن آنتي فصال بالمعاينة والتسليم بدون فصال.</span>
+          </label>
+        </div>
+
+        <button type="submit" class="btn-crimson-cta" style="width: 100%; justify-content: center; padding: 13px; margin-top: 12px;" id="btnSubmitSellerApply">
+          <span>📝 إرسال طلب الانضمام للإدارة المركزية</span>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 7: Delivery Captain Application Modal (KYC & Mandatory Geolocation Consent) -->
+  <div class="modal-overlay" id="modalDriverApply">
+    <div class="modal-content" style="max-width: 520px;">
+      <button class="modal-close" onclick="closeModal('modalDriverApply')">✕</button>
+      <div style="text-align: center; margin-bottom: 16px;">
+        <span style="font-size: 38px;">🚚</span>
+        <h3 style="font-size: 20px; font-weight: 900; color: var(--text-main); margin-top: 6px;">طلب انضمام كابتن توصيل ومعاينة (Captain Application)</h3>
+        <p style="font-size: 13px; color: var(--text-muted); line-height: 1.5;">
+          انضم لأسطول كباتن الإسكندرية. استلم السلع، سَلّم الكاش الفوري للبائعين، ووصّل للمشترين بعائد مجزي لكل مشوار.
+        </p>
+      </div>
+
+      <form id="driverApplyForm" onsubmit="handleDriverApplySubmit(event)">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">اسم الكابتن الرباعي *</label>
+            <input type="text" id="driverApplyName" class="form-input-full" placeholder="مثال: أحمد محمود الإسكندراني" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">رقم الهاتف المحمول *</label>
+            <input type="tel" id="driverApplyPhone" class="form-input-full" placeholder="01234567890" required>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">الرقم القومي (14 رقم) *</label>
+            <input type="text" id="driverApplyNationalId" class="form-input-full" placeholder="29901011234567" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">نوع وسيلة النقل *</label>
+            <select id="driverApplyVehicleType" class="form-input-full" required>
+              <option value="pickup">سيارة ربع نقل / بيك أب (Pickup Truck)</option>
+              <option value="van">فان بضائع مغلق (Cargo Van)</option>
+              <option value="tricycle">تروسيكل بضائع مجهز (Cargo Tricycle)</option>
+              <option value="motorcycle">موتوسيكل خفيف للأجهزة الصغيرة (Motorbike)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">رقم اللوحة المعدنية للسيارة *</label>
+            <input type="text" id="driverApplyVehiclePlate" class="form-input-full" placeholder="مثال: س ق ب 1234" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">رقم رخصة القيادة السارية *</label>
+            <input type="text" id="driverApplyLicenseNumber" class="form-input-full" placeholder="رقم الرخصة أو وحدة المرور" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">حي التمركز الأساسي بالإسكندرية *</label>
+          <select id="driverApplyDistrict" class="form-input-full" required>
+            <option value="Sidi Beshr">سيدي بشر والعصافرة</option>
+            <option value="Smouha">سموحة وسيدي جابر</option>
+            <option value="El-Attarine">العطارين والمنشية</option>
+            <option value="Moharam Bek">محرم بك وقنال السويس</option>
+            <option value="Miami">ميامي ومندرة</option>
+            <option value="Loran">لوران وجليم ورشدي</option>
+          </select>
+        </div>
+
+        <!-- Mandatory Geolocation Consent -->
+        <div style="background-color: #FEF3C7; border: 1px solid #F59E0B; border-radius: var(--radius-sm); padding: 12px; margin-top: 8px;">
+          <label style="display: flex; align-items: flex-start; gap: 8px; font-size: 12px; color: #92400E; cursor: pointer; font-weight: 600;">
+            <input type="checkbox" id="driverApplyGpsConsent" required style="margin-top: 3px;">
+            <span>⚠️ أوافق صراحة وإلزامياً على تفعيل ومشاركة موقعي الجغرافي الفعلي (Real-Time GPS) مع المشتري والإدارة المركزية أثناء استلام وتوصيل الشحنات، وأدرك أن مشاركة الموقع شرط أساسي لاستقبال أي طلبات في الإسكندرية.</span>
+          </label>
+        </div>
+
+        <button type="submit" class="btn-crimson-cta" style="width: 100%; justify-content: center; padding: 13px; margin-top: 14px;" id="btnSubmitDriverApply">
+          <span>🚚 إرسال طلب انضمام الكابتن للإدارة</span>
+        </button>
+      </form>
+    </div>
+  </div>
+
   <!-- Floating AI Comparison & Search Chatbot Widget -->
   <div class="floating-chatbot-container" id="floatingChatbotContainer">
     <div class="floating-chatbot-panel" id="floatingChatbotPanel">
@@ -1537,6 +1884,25 @@
       </div>
     </div>
   </footer>
+
+  <!-- Mobile Bottom Navigation Bar -->
+  <nav class="mobile-bottom-nav" id="mobileBottomNav">
+    <button class="mob-nav-btn active" onclick="switchPortalView('showroom')" data-view="showroom">
+      <span class="mob-icon">🏷️</span><span>المعرض</span>
+    </button>
+    <button class="mob-nav-btn" onclick="switchPortalView('seller')" data-view="seller">
+      <span class="mob-icon">⚡</span><span>سعّر وبِع</span>
+    </button>
+    <button class="mob-nav-btn" onclick="switchPortalView('tracking')" data-view="tracking">
+      <span class="mob-icon">🚚</span><span>تتبع</span>
+    </button>
+    <button class="mob-nav-btn" onclick="switchPortalView('priceIndex')" data-view="priceIndex">
+      <span class="mob-icon">📊</span><span>الأسعار</span>
+    </button>
+    <button class="mob-nav-btn" onclick="switchPortalView('account')" data-view="account">
+      <span class="mob-icon">👤</span><span>حسابي</span>
+    </button>
+  </nav>
 
   <!-- Toast Notifications Container -->
   <div id="toastContainer" class="toast-container" aria-live="polite"></div>

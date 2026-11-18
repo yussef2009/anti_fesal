@@ -44,9 +44,16 @@ def init_db():
         commission_amount REAL,
         status TEXT DEFAULT 'PENDING_REVIEW',
         created_at TEXT,
-        updated_at TEXT
+        updated_at TEXT,
+        seller_id TEXT
     );
     """)
+
+    # Ensure seller_id exists on already initialized databases
+    try:
+        cursor.execute("ALTER TABLE items ADD COLUMN seller_id TEXT")
+    except sqlite3.OperationalError:
+        pass
 
     # 2. deals table
     cursor.execute("""
@@ -128,6 +135,43 @@ def init_db():
         updated_at TEXT
     );
     """)
+
+    # 7. applications table (Seller & Driver Verification Desk)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS applications (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        phone TEXT NOT NULL,
+        role TEXT NOT NULL,
+        district TEXT NOT NULL,
+        application_data TEXT NOT NULL,
+        status TEXT DEFAULT 'PENDING_APPROVAL',
+        admin_notes TEXT,
+        created_at TEXT,
+        reviewed_at TEXT
+    );
+    """)
+
+    # 8. driver_locations table (Realtime GPS Coordinates)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS driver_locations (
+        driver_id TEXT PRIMARY KEY,
+        driver_name TEXT,
+        lat REAL,
+        lng REAL,
+        heading REAL DEFAULT 0,
+        sharing_enabled INTEGER DEFAULT 1,
+        last_updated TEXT
+    );
+    """)
+
+    # Upgrade existing dispatches table with realtime tracking columns if missing
+    for col, col_type in [("current_step", "TEXT DEFAULT 'ORDER_PLACED'"), ("driver_lat", "REAL"), ("driver_lng", "REAL")]:
+        try:
+            cursor.execute(f"ALTER TABLE dispatches ADD COLUMN {col} {col_type}")
+        except sqlite3.OperationalError:
+            pass
 
     conn.commit()
 
