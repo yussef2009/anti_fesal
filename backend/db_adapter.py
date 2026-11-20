@@ -8,6 +8,7 @@ import sqlite3
 import json
 import logging
 import threading
+import uuid
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, Any, List, Optional
@@ -595,7 +596,7 @@ class DatabaseAdapter:
     # ------------------ Applications Operations (Seller & Driver Onboarding) ------------------
     def create_application(self, app_data: Dict[str, Any]) -> str:
         app_data["created_at"] = app_data.get("created_at") or datetime.utcnow().isoformat()
-        app_id = app_data.get("id") or f"APP-{int(datetime.utcnow().timestamp())}"
+        app_id = app_data.get("id") or f"APP-{int(datetime.utcnow().timestamp() * 1000)}-{uuid.uuid4().hex[:4].upper()}"
         app_data["id"] = app_id
 
         if self.mode == "mongodb":

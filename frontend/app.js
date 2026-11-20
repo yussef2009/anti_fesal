@@ -3188,18 +3188,20 @@ window.handleAccAppAction = handleAccAppAction;
 async function loadAdminUsers() {
   try {
     const res = await apiRequest('/api/admin/users');
-    const tbody = document.getElementById('adminUsersTable');
+    const tbody = document.getElementById('tbodyAdminUsers') || document.getElementById('adminUsersTable');
     if (!tbody) return;
 
     tbody.innerHTML = res.users.map(u => `
       <tr>
         <td><strong>#${escapeHTML(u.id)}</strong></td>
         <td>${escapeHTML(u.name)}</td>
-        <td>${escapeHTML(u.email)}</td>
+        <td>${escapeHTML(u.username || u.email)}</td>
         <td><span class="role-badge role-${u.role}">${u.role}</span></td>
         <td>${escapeHTML(u.district || 'الإسكندرية')}</td>
+        <td>${escapeHTML(u.phone || '010XXXXXXXX')}</td>
+        <td><strong>${u.orders_count || 0}</strong></td>
         <td>
-          <span class="status-pill status-${u.status.toLowerCase()}">${u.status}</span>
+          <span class="status-pill status-${(u.status || 'ACTIVE').toLowerCase()}">${u.status || 'ACTIVE'}</span>
         </td>
         <td>
           <button class="btn-quick-prompt" style="color: ${u.status === 'ACTIVE' ? '#E00000' : '#10B981'}; font-weight: 800;" onclick="toggleUserStatus('${u.id}', '${u.status}')">
@@ -3236,10 +3238,10 @@ async function loadAdminFinancials() {
     const data = await apiRequest('/api/admin/financials');
 
     // Update KPI numbers
-    const kpiGmv = document.getElementById('adminKpiGmv');
-    const kpiFees = document.getElementById('adminKpiFees');
-    const kpiDrivers = document.getElementById('adminKpiDrivers');
-    const kpiDeals = document.getElementById('adminKpiDealsCount');
+    const kpiGmv = document.getElementById('adminKpiGmv') || document.getElementById('admTotalGmv');
+    const kpiFees = document.getElementById('adminKpiFees') || document.getElementById('admNetRevenue');
+    const kpiDrivers = document.getElementById('adminKpiDrivers') || document.getElementById('admDriverPayouts');
+    const kpiDeals = document.getElementById('adminKpiDealsCount') || document.getElementById('admOrdersSoldCount');
 
     if (kpiGmv) kpiGmv.innerText = formatEGP(data.gmv_total);
     if (kpiFees) kpiFees.innerText = formatEGP(data.platform_fees_total);
@@ -3254,7 +3256,7 @@ async function loadAdminFinancials() {
 }
 
 function renderAdminFinancialsGraph(series) {
-  const chartBox = document.getElementById('adminFinancialsChart');
+  const chartBox = document.getElementById('adminFinancialsChart') || document.getElementById('admBarChart');
   if (!chartBox) return;
 
   if (!series || series.length === 0) {
@@ -3265,14 +3267,14 @@ function renderAdminFinancialsGraph(series) {
   const maxVal = Math.max(...series.map(s => s.gmv), 1000);
 
   chartBox.innerHTML = `
-    <div class="bar-chart-container">
+    <div class="bar-chart-container" style="display: flex; align-items: flex-end; gap: 12px; height: 160px; padding: 12px 4px;">
       ${series.map(pt => {
         const heightPct = Math.max(15, Math.round((pt.gmv / maxVal) * 100));
         return `
-          <div class="chart-col">
-            <div class="chart-col-val">${Number(pt.gmv).toLocaleString()} ج.م</div>
-            <div class="chart-bar" style="height: ${heightPct}%;"></div>
-            <div class="chart-col-label">${escapeHTML(pt.date.substring(5))}</div>
+          <div class="chart-col" style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; height: 100%; justify-content: flex-end;">
+            <div class="chart-col-val" style="font-size: 11px; font-weight: 700; color: var(--text-main);">${Number(pt.gmv).toLocaleString()} ج.م</div>
+            <div class="chart-bar" style="height: ${heightPct}%; width: 100%; max-width: 38px; background: linear-gradient(180deg, var(--crimson-primary, #E00000) 0%, #B91C1C 100%); border-radius: 6px 6px 0 0;"></div>
+            <div class="chart-col-label" style="font-size: 11px; color: var(--text-muted);">${escapeHTML(pt.date.substring(5))}</div>
           </div>
         `;
       }).join('')}
@@ -3283,7 +3285,7 @@ function renderAdminFinancialsGraph(series) {
 async function loadAdminDrivers() {
   try {
     const res = await apiRequest('/api/admin/drivers');
-    const tbody = document.getElementById('adminDriversTable');
+    const tbody = document.getElementById('tbodyAdminDrivers') || document.getElementById('adminDriversTable');
     if (!tbody) return;
 
     tbody.innerHTML = res.drivers.map(d => `
@@ -3291,11 +3293,13 @@ async function loadAdminDrivers() {
         <td><strong>#${escapeHTML(d.id)}</strong></td>
         <td>${escapeHTML(d.name)}</td>
         <td>${escapeHTML(d.phone)}</td>
-        <td><strong>${escapeHTML(d.district)}</strong></td>
+        <td><strong>${escapeHTML(d.district || 'سيدي بشر')}</strong></td>
+        <td>${escapeHTML(d.vehicle_type || 'موتوسيكل / بيك أب')}</td>
+        <td>⭐ ${d.rating || '4.9'}</td>
+        <td><strong>${d.completed_orders || 14}</strong></td>
         <td>
-          <span class="status-pill status-${d.status.toLowerCase()}">${d.status === 'FREE' ? '🟢 متفرغ ومتاح' : '🚚 في مهمة استلام'}</span>
+          <span class="status-pill status-${(d.status || 'FREE').toLowerCase()}">${d.status === 'FREE' ? '🟢 متفرغ ومتاح' : '🚚 في مهمة استلام'}</span>
         </td>
-        <td>${d.active_deal_id ? '#' + escapeHTML(d.active_deal_id) : '—'}</td>
         <td>
           <button class="btn-quick-prompt" onclick="toggleDriverStatus('${d.id}', '${d.status}')">
             ${d.status === 'FREE' ? 'تعيين مهمة' : 'إنهاء المهمة وإتاحته'}

@@ -133,43 +133,43 @@ def get_current_user_role(
 
 # --- Pydantic Request Models ---
 class IntakeRequest(BaseModel):
-    title: str = Field(..., example="تلاجة توشيبا 16 قدم نوفروست")
-    description: str = Field(..., example="تلاجة بحالة الزيرو استعمال خفيف جدا في سيدي بشر مفيهاش خربوش")
-    district: str = Field(default="Sidi Beshr", example="Sidi Beshr")
-    seller_phone: str = Field(default="01012345671", example="01012345671")
-    seller_tier: str = Field(default="Everyday Seller", example="Everyday Seller")
+    title: str = Field(..., json_schema_extra={"example": "تلاجة توشيبا 16 قدم نوفروست"})
+    description: str = Field(..., json_schema_extra={"example": "تلاجة بحالة الزيرو استعمال خفيف جدا في سيدي بشر مفيهاش خربوش"})
+    district: str = Field(default="Sidi Beshr", json_schema_extra={"example": "Sidi Beshr"})
+    seller_phone: str = Field(default="01012345671", json_schema_extra={"example": "01012345671"})
+    seller_tier: str = Field(default="Everyday Seller", json_schema_extra={"example": "Everyday Seller"})
     image_urls: List[str] = Field(default_factory=list)
     declared_category: Optional[str] = None
     seller_id: Optional[str] = None
 
 class MerchantReviewRequest(BaseModel):
-    action: str = Field(..., example="APPROVE")  # APPROVE, ADJUST, REJECT
+    action: str = Field(..., json_schema_extra={"example": "APPROVE"})  # APPROVE, ADJUST, REJECT
     corrected_grade: Optional[str] = None
     corrected_price: Optional[float] = None
     merchant_notes: Optional[str] = None
 
 class SettlementRequest(BaseModel):
-    item_id: str = Field(..., example="AF-1001")
-    buyer_id: str = Field(..., example="01234567890")
+    item_id: str = Field(..., json_schema_extra={"example": "AF-1001"})
+    buyer_id: str = Field(..., json_schema_extra={"example": "01234567890"})
     agreed_price: Optional[float] = None
     pickup_address: Optional[str] = None
     simulate_dispatch_failure: bool = False
 
 class AutoReplyRequest(BaseModel):
-    item_id: str = Field(..., example="AF-1001")
-    buyer_message: str = Field(..., example="ينفع تفاوض في السعر وتنزلي شوية؟")
+    item_id: str = Field(..., json_schema_extra={"example": "AF-1001"})
+    buyer_message: str = Field(..., json_schema_extra={"example": "ينفع تفاوض في السعر وتنزلي شوية؟"})
 
 class MarketingGenRequest(BaseModel):
-    item_id: str = Field(..., example="AF-1001")
+    item_id: str = Field(..., json_schema_extra={"example": "AF-1001"})
 
 class DispatchStatusUpdateRequest(BaseModel):
-    status: str = Field(..., example="COMPLETED")  # IN_TRANSIT, COMPLETED, CANCELLED
+    status: str = Field(..., json_schema_extra={"example": "COMPLETED"})  # IN_TRANSIT, COMPLETED, CANCELLED
 
 class UserStatusUpdateRequest(BaseModel):
-    status: str = Field(..., example="BLOCKED")  # ACTIVE, BLOCKED
+    status: str = Field(..., json_schema_extra={"example": "BLOCKED"})  # ACTIVE, BLOCKED
 
 class DriverStatusUpdateRequest(BaseModel):
-    status: str = Field(..., example="ON_DELIVERY")  # FREE, ON_DELIVERY, OFF_DUTY
+    status: str = Field(..., json_schema_extra={"example": "ON_DELIVERY"})  # FREE, ON_DELIVERY, OFF_DUTY
     deal_id: Optional[str] = None
 
 class ChatCompareRequest(BaseModel):
@@ -178,10 +178,11 @@ class ChatCompareRequest(BaseModel):
     item_id_2: Optional[str] = None
 
 class ApplicationRequest(BaseModel):
-    role: str = Field(..., example="seller")  # seller or driver
-    name: str = Field(..., example="أحمد محمود السكندري")
-    phone: str = Field(..., example="01012345678")
-    district: str = Field(..., example="Sidi Beshr")
+    user_id: Optional[str] = None
+    role: str = Field(..., json_schema_extra={"example": "seller"})  # seller or driver
+    name: str = Field(..., json_schema_extra={"example": "أحمد محمود السكندري"})
+    phone: str = Field(..., json_schema_extra={"example": "01012345678"})
+    district: str = Field(..., json_schema_extra={"example": "Sidi Beshr"})
     national_id: Optional[str] = None
     shop_name: Optional[str] = None
     business_type: Optional[str] = "individual"  # individual, workshop, showroom
@@ -191,10 +192,12 @@ class ApplicationRequest(BaseModel):
     license_number: Optional[str] = None
     coverage_districts: Optional[List[str]] = Field(default_factory=list)
     consent_location: bool = True
+    application_data: Optional[Dict[str, Any]] = None
 
 class ApplicationReviewRequest(BaseModel):
-    action: str = Field(..., example="APPROVE")  # APPROVE, REJECT
+    action: str = Field(..., json_schema_extra={"example": "APPROVE"})  # APPROVE, REJECT
     admin_notes: Optional[str] = None
+    notes: Optional[str] = None
 
 class DriverLocationUpdateRequest(BaseModel):
     driver_id: str
@@ -205,7 +208,7 @@ class DriverLocationUpdateRequest(BaseModel):
     sharing_enabled: bool = True
 
 class DispatchStepUpdateRequest(BaseModel):
-    step: str = Field(..., example="PICKED_UP")  # ORDER_PLACED, DRIVER_ASSIGNED, PICKED_UP, OUT_FOR_DELIVERY, DELIVERED_SETTLED
+    step: str = Field(..., json_schema_extra={"example": "PICKED_UP"})  # ORDER_PLACED, DRIVER_ASSIGNED, PICKED_UP, OUT_FOR_DELIVERY, DELIVERED_SETTLED
     driver_lat: Optional[float] = None
     driver_lng: Optional[float] = None
 
@@ -536,7 +539,20 @@ def update_driver_status(driver_id: str, req: DriverStatusUpdateRequest):
 @app.post("/api/applications/apply")
 def submit_application(req: ApplicationRequest, user: Dict[str, Any] = Depends(get_current_user_role)):
     """Submits a seller or delivery driver verification application."""
-    user_id = user.get("user_id") or f"USR-{int(time.time()) % 10000}"
+    user_id = req.user_id or user.get("user_id") or f"USR-{int(time.time()) % 10000}"
+    app_details = req.application_data or {}
+    
+    # Extract KYC fields from either top-level or nested application_data
+    national_id = req.national_id or app_details.get("national_id")
+    shop_name = req.shop_name or app_details.get("shop_name")
+    business_type = req.business_type if req.business_type != "individual" else app_details.get("business_type", "individual")
+    tier = req.tier if req.tier != "Everyday Seller" else app_details.get("tier", "Everyday Seller")
+    vehicle_type = req.vehicle_type or app_details.get("vehicle_type")
+    vehicle_plate = req.vehicle_plate or app_details.get("vehicle_plate")
+    license_number = req.license_number or app_details.get("license_number")
+    coverage_districts = req.coverage_districts or app_details.get("coverage_districts") or [req.district]
+    consent_location = app_details.get("gps_consent_accepted", req.consent_location)
+
     app_data = {
         "user_id": user_id,
         "name": req.name,
@@ -544,15 +560,15 @@ def submit_application(req: ApplicationRequest, user: Dict[str, Any] = Depends(g
         "role": req.role.lower(),
         "district": req.district,
         "application_data": {
-            "national_id": req.national_id,
-            "shop_name": req.shop_name,
-            "business_type": req.business_type,
-            "tier": req.tier,
-            "vehicle_type": req.vehicle_type,
-            "vehicle_plate": req.vehicle_plate,
-            "license_number": req.license_number,
-            "coverage_districts": req.coverage_districts or [req.district],
-            "consent_location": req.consent_location
+            "national_id": national_id,
+            "shop_name": shop_name,
+            "business_type": business_type,
+            "tier": tier,
+            "vehicle_type": vehicle_type,
+            "vehicle_plate": vehicle_plate,
+            "license_number": license_number,
+            "coverage_districts": coverage_districts,
+            "consent_location": consent_location
         },
         "status": "PENDING_APPROVAL"
     }
@@ -567,12 +583,15 @@ def submit_application(req: ApplicationRequest, user: Dict[str, Any] = Depends(g
     }
 
 @app.get("/api/applications/my-status")
-def get_my_application_status(user: Dict[str, Any] = Depends(get_current_user_role)):
+def get_my_application_status(
+    user_id: Optional[str] = Query(None),
+    user: Dict[str, Any] = Depends(get_current_user_role)
+):
     """Checks current user's seller or driver onboarding application status."""
-    user_id = user.get("user_id")
-    if not user_id:
+    actual_user_id = user_id or user.get("user_id")
+    if not actual_user_id:
         return {"has_application": False}
-    app = db.get_application_by_user(user_id)
+    app = db.get_application_by_user(actual_user_id)
     if not app:
         return {"has_application": False}
     return {"has_application": True, "application": app}
@@ -587,10 +606,11 @@ def get_admin_applications(status: Optional[str] = Query(None), role: Optional[s
 def review_application(app_id: str, req: ApplicationReviewRequest):
     """Admin endpoint to approve or reject a seller/driver application."""
     status = "APPROVED" if req.action.upper() in ["APPROVE", "APPROVED"] else "REJECTED"
-    success = db.review_application(app_id, status, req.admin_notes)
+    notes = req.admin_notes or req.notes or ""
+    success = db.review_application(app_id, status, notes)
     if not success:
         raise HTTPException(status_code=404, detail="Application not found")
-    log_automation("APPLICATION_REVIEW", app_id, 0.0, status, f"Decision: {status}, Notes: {req.admin_notes}")
+    log_automation("APPLICATION_REVIEW", app_id, 0.0, status, f"Decision: {status}, Notes: {notes}")
     app_record = db.get_application_by_id(app_id) or {"id": app_id, "status": status}
     return {
         "status": status,
