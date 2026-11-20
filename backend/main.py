@@ -88,7 +88,13 @@ app.add_middleware(
 )
 
 # Mount local images directory for zero-downtime local storage fallback
-app.mount("/images", StaticFiles(directory=str(IMAGES_DIR)), name="images")
+if not IMAGES_DIR.exists():
+    try:
+        IMAGES_DIR.mkdir(parents=True, exist_ok=True)
+    except Exception:
+        pass
+if IMAGES_DIR.exists():
+    app.mount("/images", StaticFiles(directory=str(IMAGES_DIR)), name="images")
 
 # Serve frontend static assets
 FRONTEND_DIR = BASE_DIR / "frontend"

@@ -145,3 +145,14 @@ timestamp,event_type,item_id,execution_time_ms,status,details
 2026-11-19T06:48:47.677764,APPLICATION_REVIEW,APP-1795020908,0.0,APPROVED,"Decision: APPROVED, Notes: تم الاعتماد الرسمي وتفعيل الصلاحيات من الإدارة"
 2026-11-19T06:48:49.421437,APPLICATION_REVIEW,APP-1795024269,0.0,APPROVED,"Decision: APPROVED, Notes: تم الاعتماد الرسمي وتفعيل الصلاحيات من الإدارة"
 2026-11-19T06:48:50.485743,APPLICATION_REVIEW,APP-1795024305,0.0,APPROVED,"Decision: APPROVED, Notes: تم الاعتماد الرسمي وتفعيل الصلاحيات من الإدارة"
+2026-11-20T18:05:15.641905,DISPATCH_ATTEMPT_1,TEST-DISP-OK,0.0,IN_PROGRESS,"District: Sidi Beshr, Delay: 0s, Driver: كابتن أحمد الإسكندراني"
+2026-11-20T18:05:15.643518,DISPATCH_SUCCESS,TEST-DISP-OK,1.61,SUCCESS,Driver كابتن أحمد الإسكندراني assigned on attempt 1
+2026-11-20T18:05:15.644070,DISPATCH_ATTEMPT_1,TEST-DISP-FAIL,0.0,IN_PROGRESS,"District: El-Attarine, Delay: 0s, Driver: كابتن طارق الديب"
+2026-11-20T18:05:18.645316,DISPATCH_ATTEMPT_2,TEST-DISP-FAIL,0.0,IN_PROGRESS,"District: El-Attarine, Delay: 3s, Driver: كابتن طارق الديب"
+2026-11-20T18:05:24.646658,DISPATCH_ATTEMPT_3,TEST-DISP-FAIL,0.0,IN_PROGRESS,"District: El-Attarine, Delay: 6s, Driver: كابتن طارق الديب"
+2026-11-20T18:05:24.646658,DISPATCH_FAILED,TEST-DISP-FAIL,9002.59,FAILED,"All 3 dispatch attempts failed after backoff (0s, 3s, 6s). Alert triggered."
+2026-11-20T18:19:23.403026,APPLICATION_SUBMITTED,APP-1795191563164-AE79,0.0,PENDING,"Role: seller, User: يوسف الشناوي"
+2026-11-20T18:19:23.634129,APPLICATION_SUBMITTED,APP-1795191563582-0EC7,0.0,PENDING,"Role: driver, User: أحمد الإسكندراني"
+2026-11-20T18:19:23.829165,APPLICATION_REVIEW,APP-1795191563164-AE79,0.0,APPROVED,"Decision: APPROVED, Notes: تم فحص السجل التجاري والاعتماد بنجاح"
+2026-11-20T18:19:24.245493,APPLICATION_REVIEW,APP-1795191563582-0EC7,0.0,APPROVED,"Decision: APPROVED, Notes: تم اعتماد رخصة القيادة والسيارة"
+2026-11-20T18:19:24.881409,DELIVERY_STEP_UPDATE,DISP-3001,0.0,PICKED_UP,Step updated to PICKED_UP

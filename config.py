@@ -55,22 +55,52 @@ CATEGORIES = [
 # --- File Paths ---
 DATA_DIR = BASE_DIR / "data"
 LOGS_DIR = BASE_DIR / "logs"
-IMAGES_DIR = DATA_DIR / "images"
 
-SQLITE_DB_PATH = DATA_DIR / "antifesal.db"
+# Detect if running in a serverless environment (e.g. Vercel, AWS Lambda)
+IS_VERCEL = bool(os.getenv("VERCEL"))
+
+# Read-only assets (always loaded from repository)
 PRICE_MATRIX_CSV = DATA_DIR / "price_matrix_alexandria.csv"
 TEST_DATASET_50_CSV = DATA_DIR / "test_dataset_50.csv"
 RELIABILITY_TEST_100_CSV = DATA_DIR / "reliability_test_100.csv"
-DAILY_CATALOG_MD = DATA_DIR / "daily_catalog.md"
 
-AUTOMATION_LOG_CSV = LOGS_DIR / "automation_log.csv"
-SKIPPED_ITEMS_LOG_CSV = LOGS_DIR / "skipped_items_log.csv"
-CORRECTIONS_CSV = LOGS_DIR / "corrections.csv"
+if IS_VERCEL:
+    WRITABLE_ROOT = Path("/tmp")
+    RUNTIME_DATA_DIR = WRITABLE_ROOT / "data"
+    RUNTIME_LOGS_DIR = WRITABLE_ROOT / "logs"
+    IMAGES_DIR = RUNTIME_DATA_DIR / "images"
+    SQLITE_DB_PATH = RUNTIME_DATA_DIR / "antifesal.db"
+    DAILY_CATALOG_MD = RUNTIME_DATA_DIR / "daily_catalog.md"
+    AUTOMATION_LOG_CSV = RUNTIME_LOGS_DIR / "automation_log.csv"
+    SKIPPED_ITEMS_LOG_CSV = RUNTIME_LOGS_DIR / "skipped_items_log.csv"
+    CORRECTIONS_CSV = RUNTIME_LOGS_DIR / "corrections.csv"
 
-# Ensure runtime directories exist
-DATA_DIR.mkdir(parents=True, exist_ok=True)
-LOGS_DIR.mkdir(parents=True, exist_ok=True)
-IMAGES_DIR.mkdir(parents=True, exist_ok=True)
+    for d in (RUNTIME_DATA_DIR, RUNTIME_LOGS_DIR, IMAGES_DIR):
+        try:
+            d.mkdir(parents=True, exist_ok=True)
+        except Exception:
+            pass
+
+    src_db = DATA_DIR / "antifesal.db"
+    if src_db.exists() and not SQLITE_DB_PATH.exists():
+        try:
+            import shutil
+            shutil.copy2(src_db, SQLITE_DB_PATH)
+        except Exception:
+            pass
+else:
+    IMAGES_DIR = DATA_DIR / "images"
+    SQLITE_DB_PATH = DATA_DIR / "antifesal.db"
+    DAILY_CATALOG_MD = DATA_DIR / "daily_catalog.md"
+    AUTOMATION_LOG_CSV = LOGS_DIR / "automation_log.csv"
+    SKIPPED_ITEMS_LOG_CSV = LOGS_DIR / "skipped_items_log.csv"
+    CORRECTIONS_CSV = LOGS_DIR / "corrections.csv"
+
+    for d in (DATA_DIR, LOGS_DIR, IMAGES_DIR):
+        try:
+            d.mkdir(parents=True, exist_ok=True)
+        except Exception:
+            pass
 
 # --- External Cloud Service Configuration & Fallback Flags ---
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "").strip()

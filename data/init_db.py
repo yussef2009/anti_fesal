@@ -19,7 +19,10 @@ if str(BASE_DIR) not in sys.path:
 from config import SQLITE_DB_PATH, TEST_DATASET_50_CSV, PRICE_MATRIX_CSV
 
 def init_db():
-    SQLITE_DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        SQLITE_DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+    except Exception:
+        pass
     conn = sqlite3.connect(str(SQLITE_DB_PATH))
     cursor = conn.cursor()
 

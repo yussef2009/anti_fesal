@@ -1,11 +1,18 @@
 {
   "version": 2,
-  "name": "anti-fesal",
   "cleanUrls": true,
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "https://api.anti-fesal.me/api/$1"
+      "destination": "/api/index.py"
+    },
+    {
+      "source": "/images/(.*)",
+      "destination": "/api/index.py"
+    },
+    {
+      "source": "/",
+      "destination": "/frontend/index.html"
     },
     {
       "source": "/(.*)",
