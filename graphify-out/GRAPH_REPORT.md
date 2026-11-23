@@ -1,12 +1,19 @@
-# Graph Report - anti_fesal  (2026-11-20)
+# Graph Report - anti_fesal  (2026-11-23)
 
 ## Corpus Check
-- Corpus is ~42,076 words - fits in a single context window. You may not need a graph.
+- 35 files · ~42,257 words
+- Verdict: corpus is large enough that graph structure adds value.
+- Unclassified: 10 file(s) not represented in the graph (top: .csv 6, (none) 2, .example 1)
 
 ## Summary
-- 440 nodes · 898 edges · 38 communities (15 shown, 23 thin omitted)
+- 443 nodes · 902 edges · 38 communities (16 shown, 22 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 12 edges (avg confidence: 0.89)
 - Token cost: 13,300 input · 3,100 output
+
+## Graph Freshness
+- Built from commit: `12aed056`
+- Run `git rev-parse HEAD` and compare to check if the graph is stale.
+- Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
 - Frontend Client Application UI
@@ -31,9 +38,7 @@
 - AI Product Comparison Assistant
 - Live GPS Tracking & Location
 - Admin Analytics & Governance
-- Driver Status Management
 - Social Marketing Copy Generator
-- Product Intake Pipeline
 - CSV Audit Log Logging
 - Graphify Knowledge Graph Rules
 - Guarantees & Platform Manifesto
@@ -54,30 +59,30 @@
 5. `escapeHTML()` - 18 edges
 6. `formatEGP()` - 16 edges
 7. `log_automation()` - 15 edges
-8. `trackOrder()` - 9 edges
-9. `loadAccountData()` - 9 edges
+8. `loadAccountData()` - 9 edges
+9. `trackOrder()` - 9 edges
 10. `services` - 9 edges
 
 ## Surprising Connections (you probably didn't know these)
+- `Floating AI Comparison Chatbot Widget` --references--> `chatbot_quick_search_and_compare()`  [INFERRED]
+  frontend/index.html → backend/main.py
 - `Trader Studio Marketing & Auto-Reply Bot` --conceptually_related_to--> `MarketingAutoReplyAgent`  [INFERRED]
   frontend/index.html → backend/agents/marketing_autoreply.py
 - `Seller AI Appraisal & Instant Payout Receipt` --conceptually_related_to--> `ValuationEngineAgent`  [INFERRED]
   frontend/index.html → backend/agents/valuation_engine.py
-- `Floating AI Comparison Chatbot Widget` --references--> `chatbot_quick_search_and_compare()`  [INFERRED]
-  frontend/index.html → backend/main.py
-- `Google Gemini Vision AI Appraisal` --implements--> `VisualInspectorAgent`  [EXTRACTED]
-  SETUP_AND_CONNECTIONS.md → backend/agents/visual_inspector.py
 - `Alexandria Delivery Captains & GPS Fleet` --references--> `update_driver_location()`  [EXTRACTED]
   README.md → backend/main.py
+- `Google Gemini Vision AI Appraisal` --implements--> `VisualInspectorAgent`  [EXTRACTED]
+  SETUP_AND_CONNECTIONS.md → backend/agents/visual_inspector.py
 
 ## Import Cycles
 - None detected.
 
 ## Hyperedges (group relationships)
-- **Alexandria Re-commerce Multi-Agent Lifecycle** — readme_anti_fesal_platform, readme_verified_seller_studio, readme_delivery_captain_fleet, backend_workflows_workflow_1_intake, backend_workflows_workflow_3_settlement [INFERRED 0.85]
 - **Zero-Crash Cloud-to-Local Fallback Ecosystem** — setup_and_connections_fallback_architecture, setup_and_connections_gemini_vision_integration, setup_and_connections_mongodb_atlas_sqlite, setup_and_connections_appwrite_storage, setup_and_connections_datadog_observability [EXTRACTED 1.00]
+- **Alexandria Re-commerce Multi-Agent Lifecycle** — readme_anti_fesal_platform, readme_verified_seller_studio, readme_delivery_captain_fleet, backend_workflows_workflow_1_intake, backend_workflows_workflow_3_settlement [INFERRED 0.85]
 
-## Communities (38 total, 23 thin omitted)
+## Communities (38 total, 22 thin omitted)
 
 ### Community 0 - "Frontend Client Application UI"
 Cohesion: 0.06
@@ -89,19 +94,19 @@ Nodes (13): IntakeWorkflow, SettlementWorkflow, Daily Verified Secondhand Catalo
 
 ### Community 2 - "FastAPI Backend Core Endpoints"
 Cohesion: 0.08
-Nodes (19): get_admin_applications(), get_admin_drivers(), get_admin_financials(), get_admin_users(), get_automation_logs(), get_corrections_logs(), get_dispatches(), get_health_status() (+11 more)
+Nodes (15): get_admin_applications(), get_admin_drivers(), get_admin_financials(), get_admin_users(), get_dispatches(), get_health_status(), get_item(), get_items() (+7 more)
 
 ### Community 4 - "API Request Schemas & Auth"
-Cohesion: 0.08
-Nodes (18): ApplicationReviewRequest, auth_login(), auth_register(), autoreply_chat(), AutoReplyRequest, DispatchStatusUpdateRequest, DispatchStepUpdateRequest, LoginRequest (+10 more)
+Cohesion: 0.09
+Nodes (17): ApplicationReviewRequest, DispatchStatusUpdateRequest, DispatchStepUpdateRequest, DriverLocationUpdateRequest, DriverStatusUpdateRequest, review_application(), run_daily_catalog(), settle_deal() (+9 more)
 
 ### Community 5 - "Image Seeding & Execution"
 Cohesion: 0.17
 Nodes (3): download_and_seed(), main(), test_all()
 
 ### Community 6 - "Role Validation & Review Models"
-Cohesion: 0.14
-Nodes (7): ApplicationRequest, get_current_user_role(), get_my_application_status(), get_user_account_data(), MerchantReviewRequest, review_item(), submit_application()
+Cohesion: 0.12
+Nodes (9): ApplicationRequest, get_current_user_role(), get_my_application_status(), get_user_account_data(), IntakeRequest, MerchantReviewRequest, process_intake(), review_item() (+1 more)
 
 ### Community 7 - "NPM Package Configuration"
 Cohesion: 0.15
@@ -124,40 +129,44 @@ Cohesion: 0.29
 Nodes (7): Frontend Portal Multi-View Architecture, Verified Showroom View (Buyer), Order Tracking & Leaflet Live Map View, Anti-Fesal Brand Identity Logo, Anti-Fesal Re-commerce Platform, Buyer-Centric Marketplace Showroom, 5-Stage Delivery Progression Road
 
 ### Community 19 - "Vercel Frontend Proxy Routing"
-Cohesion: 0.40
-Nodes (4): cleanUrls, name, rewrites, version
+Cohesion: 0.50
+Nodes (3): cleanUrls, rewrites, version
 
 ### Community 20 - "AI Product Comparison Assistant"
 Cohesion: 0.50
 Nodes (3): chatbot_quick_search_and_compare(), ChatCompareRequest, Floating AI Comparison Chatbot Widget
 
-### Community 21 - "Live GPS Tracking & Location"
-Cohesion: 0.50
-Nodes (3): DriverLocationUpdateRequest, update_driver_location(), Alexandria Delivery Captains & GPS Fleet
-
 ### Community 22 - "Admin Analytics & Governance"
 Cohesion: 0.50
 Nodes (3): get_admin_analytics(), Admin Master Governance Portal, Admin Governance & Verification Desk
 
+### Community 24 - "Social Marketing Copy Generator"
+Cohesion: 0.13
+Nodes (6): auth_login(), autoreply_chat(), AutoReplyRequest, generate_marketing(), LoginRequest, MarketingGenRequest
+
+### Community 26 - "CSV Audit Log Logging"
+Cohesion: 0.25
+Nodes (5): get_automation_logs(), get_corrections_logs(), get_skipped_logs(), _ensure_csv_headers(), read_log_records()
+
 ## Knowledge Gaps
-- **22 isolated node(s):** `Graphify Navigation & Update Rules`, `Anti-Fesal Re-commerce Platform`, `Buyer-Centric Marketplace Showroom`, `Verified Seller Studio & KYC`, `Alexandria Delivery Captains & GPS Fleet` (+17 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 170 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **23 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **22 isolated node(s):** `Verified Seller Studio & KYC`, `Appwrite Storage with Local Disk Fallback`, `MongoDB Atlas & SQLite Dual Persistence`, `Daily Verified Secondhand Catalog`, `Google Gemini Vision AI Appraisal` (+17 more)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 172 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **22 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `DatabaseAdapter` connect `Dual Database Persistence Layer` to `Autonomous Multi-Agent Workers`?**
   _High betweenness centrality (0.082) - this node is a cross-community bridge._
-- **What connects `Graphify Navigation & Update Rules`, `Anti-Fesal Re-commerce Platform`, `Buyer-Centric Marketplace Showroom` to the rest of the system?**
+- **What connects `Verified Seller Studio & KYC`, `Appwrite Storage with Local Disk Fallback`, `MongoDB Atlas & SQLite Dual Persistence` to the rest of the system?**
   _22 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Frontend Client Application UI` be split into smaller, more focused modules?**
   _Cohesion score 0.06382978723404255 - nodes in this community are weakly interconnected._
-- **Why does `log_automation()` connect `Autonomous Multi-Agent Workers` to `Dispatch Agent & Routing`, `FastAPI Backend Core Endpoints`, `API Request Schemas & Auth`, `Role Validation & Review Models`?**
+- **Why does `log_automation()` connect `Autonomous Multi-Agent Workers` to `Social Marketing Copy Generator`, `Dispatch Agent & Routing`, `API Request Schemas & Auth`, `Role Validation & Review Models`?**
   _High betweenness centrality (0.026) - this node is a cross-community bridge._
 - **Should `Autonomous Multi-Agent Workers` be split into smaller, more focused modules?**
-  _Cohesion score 0.07462686567164178 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.07161125319693094 - nodes in this community are weakly interconnected._
 - **Why does `VisualInspectorAgent` connect `Visual Inspection & CV Fallback` to `Autonomous Multi-Agent Workers`?**
   _High betweenness centrality (0.025) - this node is a cross-community bridge._
 - **Should `FastAPI Backend Core Endpoints` be split into smaller, more focused modules?**
-  _Cohesion score 0.07564102564102564 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.07692307692307693 - nodes in this community are weakly interconnected._
