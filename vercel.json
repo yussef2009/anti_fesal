@@ -11,6 +11,18 @@
       "destination": "/api/index.py"
     },
     {
+      "source": "/docs",
+      "destination": "/api/index.py"
+    },
+    {
+      "source": "/openapi.json",
+      "destination": "/api/index.py"
+    },
+    {
+      "source": "/redoc",
+      "destination": "/api/index.py"
+    },
+    {
       "source": "/",
       "destination": "/frontend/index.html"
     },
