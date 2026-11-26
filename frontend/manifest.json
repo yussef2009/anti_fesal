@@ -1,23 +1,35 @@
 {
+  "id": "/",
   "name": "آنتي فصال - Anti-Fesal",
   "short_name": "آنتي فصال",
-  "description": "سعّر، بيع، ومن غير وجع فصال - أول منصة مصرية ذكية لتداول المستعمل بالإسكندرية",
+  "description": "سعّر، بيع، ومن غير وجع فصال — أول منصة مصرية ذكية لتداول السلع المستعملة المفحوصة بالإسكندرية",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
+  "orientation": "portrait-primary",
   "background_color": "#F7F8F9",
   "theme_color": "#E00000",
   "dir": "rtl",
   "lang": "ar",
+  "categories": ["shopping", "lifestyle", "business"],
   "icons": [
     {
-      "src": "/logo.png",
+      "src": "/icons/icon-192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
-      "src": "/logo.png",
+      "src": "/icons/icon-512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }
