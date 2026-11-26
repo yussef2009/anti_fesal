@@ -104,6 +104,7 @@ else:
 
 # --- External Cloud Service Configuration & Fallback Flags ---
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "").strip()
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-1.5-flash").strip()
 MONGODB_URI = os.getenv("MONGODB_URI", "").strip()
 
 APPWRITE_ENDPOINT = os.getenv("APPWRITE_ENDPOINT", "https://cloud.appwrite.io/v1").strip()
@@ -120,13 +121,19 @@ DD_SITE = os.getenv("DD_SITE", "us5.datadoghq.com").strip()
 DD_LLMOBS_ENABLED = os.getenv("DD_LLMOBS_ENABLED", "1").strip()
 DD_LLMOBS_ML_APP = os.getenv("DD_LLMOBS_ML_APP", "anti-fesal").strip()
 
+# --- Server-Side Auth & Portal Gate Configuration ---
+AUTH_ENFORCE = os.getenv("AUTH_ENFORCE", "1").strip() == "1"
+SESSION_SECRET = os.getenv("SESSION_SECRET", "").strip() or "anti-fesal-dev-session-secret-change-in-prod"
+ADMIN_ACCESS_PIN = os.getenv("ADMIN_ACCESS_PIN", "ADMIN-2026").strip()
+CAPTAIN_ACCESS_PIN = os.getenv("CAPTAIN_ACCESS_PIN", "CAPTAIN-ALEX").strip()
+
 CUSTOM_DOMAIN = os.getenv("CUSTOM_DOMAIN", "anti-fesal.me").strip()
 PORT = int(os.getenv("PORT", 8000))
 HOST = os.getenv("HOST", "127.0.0.1")
 
 # Convenience boolean flags
-HAS_GEMINI = bool(GEMINI_API_KEY)
-HAS_MONGODB = bool(MONGODB_URI)
-HAS_APPWRITE = bool(APPWRITE_API_KEY and APPWRITE_PROJECT_ID and APPWRITE_BUCKET_ID)
-HAS_CLERK = bool(CLERK_SECRET_KEY)
-HAS_DATADOG = bool(DD_API_KEY)
+HAS_GEMINI = bool(GEMINI_API_KEY) and not GEMINI_API_KEY.startswith("your_")
+HAS_MONGODB = bool(MONGODB_URI) and "<db_password>" not in MONGODB_URI
+HAS_APPWRITE = bool(APPWRITE_API_KEY and APPWRITE_PROJECT_ID and APPWRITE_BUCKET_ID) and not APPWRITE_API_KEY.startswith("your_")
+HAS_CLERK = bool(CLERK_SECRET_KEY) and not CLERK_SECRET_KEY.startswith("sk_test_your_")
+HAS_DATADOG = bool(DD_API_KEY) and not DD_API_KEY.startswith("your_")

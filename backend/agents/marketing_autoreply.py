@@ -4,18 +4,40 @@ Generates localized Egyptian Arabic & English social posts with 'Verified Grade 
 Provides lightning-fast (<2s) intelligent anti-haggling customer auto-replies with direct reservation links.
 """
 
-import time
-import re
 import logging
-from typing import Dict, Any, Optional
-from pathlib import Path
 import sys
+import time
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict
+from urllib.parse import quote
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 if str(BASE_DIR) not in sys.path:
     sys.path.insert(0, str(BASE_DIR))
 
+from config import CUSTOM_DOMAIN
+
 logger = logging.getLogger("anti_fesal.marketing_autoreply")
+
+
+def _build_reservation_link(item_id: str) -> str:
+    domain = (CUSTOM_DOMAIN or "anti-fesal.me").strip() or "anti-fesal.me"
+    safe_id = quote(str(item_id or "AF-0000"), safe="")
+    return f"https://{domain}/#reserve?id={safe_id}"
+
+
+def _is_item_slow_stock(item: Dict[str, Any]) -> bool:
+    created_at_str = item.get("created_at")
+    if not created_at_str:
+        return False
+    try:
+        clean_date = str(created_at_str).replace("Z", "")
+        item_date = datetime.fromisoformat(clean_date)
+        return (datetime.utcnow() - item_date).days >= 14
+    except Exception:
+        return False
+
 
 class MarketingAutoReplyAgent:
     def __init__(self):
@@ -27,30 +49,22 @@ class MarketingAutoReplyAgent:
         Instagram Stories, and WhatsApp Catalog.
         """
         title = item.get("title", "منتج مميز")
-        category = item.get("category", "أجهزة")
         brand = item.get("brand_model", "")
         grade = item.get("condition_grade", "A")
-        price = item.get("expected_resale_price", 0.0)
+        price = float(item.get("expected_resale_price") or 0.0)
         district = item.get("district", "الإسكندرية")
         item_id = item.get("id", "AF-0000")
         defects = item.get("detected_defects", [])
+        reservation_link = _build_reservation_link(item_id)
 
         defect_str = "لا توجد عيوب تذكر" if not defects else "، ".join(defects)
+        is_slow_stock = _is_item_slow_stock(item)
 
-        # Check 14-day slow stock rule (-5% markdown)
-        created_at_str = item.get("created_at")
-        is_slow_stock = False
-        if created_at_str:
-            try:
-                from datetime import datetime
-                clean_date = created_at_str.replace("Z", "")
-                item_date = datetime.fromisoformat(clean_date)
-                if (datetime.utcnow() - item_date).days >= 14:
-                    is_slow_stock = True
-            except Exception:
-                pass
-
-        slow_stock_badge = "🔥 [عرض حصري: تم تطبيق خصم 5% تلقائي على هذا المنتج لتسريع حركة المخزون!]" if is_slow_stock else ""
+        slow_stock_badge = (
+            "🔥 [عرض حصري: تم تطبيق خصم 5% تلقائي على هذا المنتج لتسريع حركة المخزون!]"
+            if is_slow_stock
+            else ""
+        )
 
         # 1. Facebook Marketplace Post
         facebook_copy = f"""⚡ معروض للبيع في الإسكندرية ({district}) | منصة آنتي فصال ⚡
@@ -63,7 +77,7 @@ class MarketingAutoReplyAgent:
 🚚 خدمة الدفع كاش عند المعاينة بعد التأكد من سلامة المنتج 100%
 
 🔗 كود الحجز الفوري: {item_id}
-رابط الشراء المباشر: https://anti-fesal.me/#reserve?id={item_id}
+رابط الشراء المباشر: {reservation_link}
 
 #آنتي_فصال #أجهزة_مستعملة_الإسكندرية #سعّر_بيع_بدون_وجع_فصال #{district.replace('-', '_')}"""
 
@@ -73,7 +87,7 @@ class MarketingAutoReplyAgent:
 🚫 ودّع الفصال والمماطلة!
 💵 {price:,.0f} EGP فقط — سعر عادل ونهائي
 📍 متاح في {district}، الإسكندرية
-📲 اضغط على الرابط للحجز الفوري ومعاينة تقرير الفحص!"""
+📲 للحجز الفوري ومعاينة تقرير الفحص: {reservation_link}"""
 
         # 3. WhatsApp Catalog Description
         whatsapp_copy = f"""*آنتي فصال - كتالوج الإسكندرية المعتمد*
@@ -82,12 +96,13 @@ class MarketingAutoReplyAgent:
 ⭐ الحالة: درجة {grade} (فحص موثّق)
 💰 السعر الثابت: {price:,.0f} ج.م (شامل المعاينة)
 📍 الموقع: {district}
-🛒 للحجز الفوري والتوصيل: https://anti-fesal.me/#reserve?id={item_id}"""
+🛒 للحجز الفوري والتوصيل: {reservation_link}"""
 
         return {
             "facebook_marketplace": facebook_copy,
             "instagram_story": instagram_copy,
-            "whatsapp_catalog": whatsapp_copy
+            "whatsapp_catalog": whatsapp_copy,
+            "reservation_link": reservation_link,
         }
 
     def autoreply(self, item: Dict[str, Any], buyer_message: str) -> Dict[str, Any]:
@@ -99,32 +114,26 @@ class MarketingAutoReplyAgent:
         msg = (buyer_message or "").strip().lower()
 
         title = item.get("title", "المنتج")
-        price = item.get("expected_resale_price", 0.0)
+        price = float(item.get("expected_resale_price") or 0.0)
         grade = item.get("condition_grade", "A")
         district = item.get("district", "الإسكندرية")
-        status = item.get("status", "AUTO_APPROVED")
+        status = (item.get("status") or "AUTO_APPROVED").upper()
         item_id = item.get("id", "AF-0000")
-        reservation_link = f"https://anti-fesal.me/#reserve?id={item_id}"
+        reservation_link = _build_reservation_link(item_id)
 
         # 1. Haggling / Lowball Intent Detection
-        haggling_keywords = ["تفاوض", "فصال", "تنزيل", "نزل", "اخرها", "آخرها", "هتخلص", "تخلص بكام", "تخلص بكام؟",
-                             "نهائي", "اقل", "أقل", "ارخص", "discount", "negotiate", "less", "offer"]
+        haggling_keywords = [
+            "تفاوض", "فصال", "تنزيل", "نزل", "اخرها", "آخرها", "هتخلص", "تخلص بكام", "تخلص بكام؟",
+            "نهائي", "اقل", "أقل", "ارخص", "discount", "negotiate", "less", "offer",
+        ]
         is_haggling = any(kw in msg for kw in haggling_keywords)
 
-        # Check slow stock rule
-        created_at_str = item.get("created_at")
-        is_slow_stock = False
-        if created_at_str:
-            try:
-                from datetime import datetime
-                clean_date = created_at_str.replace("Z", "")
-                item_date = datetime.fromisoformat(clean_date)
-                if (datetime.utcnow() - item_date).days >= 14:
-                    is_slow_stock = True
-            except Exception:
-                pass
-
-        slow_stock_note = " (علماً بأنه تم تطبيق خصم 5% تلقائياً لتسريع حركة المخزون)" if is_slow_stock else ""
+        is_slow_stock = _is_item_slow_stock(item)
+        slow_stock_note = (
+            " (علماً بأنه تم تطبيق خصم 5% تلقائياً لتسريع حركة المخزون)"
+            if is_slow_stock
+            else ""
+        )
 
         # 2. Price Inquiry Intent
         price_keywords = ["بكام", "السعر", "سعره", "سعرها", "تكلفة", "بكام؟", "price", "how much", "cost"]
@@ -157,9 +166,11 @@ class MarketingAutoReplyAgent:
             )
         elif is_availability:
             intent = "availability_inquiry"
-            is_sold = status == "SOLD"
-            if is_sold:
-                reply_text = f"للأسف يا فندم، تم بيع {title} مؤخراً! تابع منصة آنتي فصال لمشاهدة عروض الإسكندرية المتاحة حالياً."
+            if status in ("SOLD", "DISPATCHED", "REJECTED"):
+                reply_text = (
+                    f"للأسف يا فندم، تم حجز أو بيع {title} مؤخراً! "
+                    f"تابع منصة آنتي فصال لمشاهدة عروض الإسكندرية المتاحة حالياً."
+                )
             else:
                 reply_text = (
                     f"أيوة يا فندم، {title} متاح حالياً وجاهز للمعاينة الفورية والتسليم في الإسكندرية ({district})! ✅\n"
@@ -187,7 +198,8 @@ class MarketingAutoReplyAgent:
             "buyer_message": buyer_message,
             "reply_text": reply_text,
             "response_time_ms": round(elapsed_ms, 2),
-            "reservation_link": reservation_link
+            "reservation_link": reservation_link,
         }
+
 
 marketing_autoreply = MarketingAutoReplyAgent()

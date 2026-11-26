@@ -7,6 +7,9 @@ and seeds reference records from the Alexandria test dataset.
 import sqlite3
 import csv
 import json
+import hashlib
+import hmac
+import secrets
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -17,6 +20,32 @@ if str(BASE_DIR) not in sys.path:
     sys.path.insert(0, str(BASE_DIR))
 
 from config import SQLITE_DB_PATH, TEST_DATASET_50_CSV, PRICE_MATRIX_CSV
+
+PBKDF2_ITERATIONS = 200_000
+
+
+def hash_password(password: str) -> str:
+    """Hashes a plaintext password with a random 16-byte salt using PBKDF2-HMAC-SHA256."""
+    salt = secrets.token_bytes(16)
+    dk = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, PBKDF2_ITERATIONS)
+    return f"pbkdf2_sha256${PBKDF2_ITERATIONS}${salt.hex()}${dk.hex()}"
+
+
+def verify_password(password: str, stored_hash: str) -> bool:
+    """Verifies a plaintext password against a stored PBKDF2-HMAC-SHA256 hash."""
+    if not password or not stored_hash:
+        return False
+    try:
+        parts = stored_hash.split("$")
+        if len(parts) != 4 or parts[0] != "pbkdf2_sha256":
+            return False
+        iterations = int(parts[1])
+        salt = bytes.fromhex(parts[2])
+        expected_dk = bytes.fromhex(parts[3])
+        computed_dk = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, iterations)
+        return hmac.compare_digest(computed_dk, expected_dk)
+    except Exception:
+        return False
 
 def init_db():
     try:
@@ -81,11 +110,18 @@ def init_db():
         item_id TEXT NOT NULL,
         district TEXT NOT NULL,
         pickup_address TEXT,
+        delivery_address TEXT,
+        delivery_district TEXT,
+        driver_id TEXT,
         driver_name TEXT,
         driver_phone TEXT,
+        driver_vehicle TEXT,
         payout_cash REAL,
         retry_count INTEGER DEFAULT 0,
         status TEXT DEFAULT 'PENDING',
+        current_step TEXT DEFAULT 'ORDER_PLACED',
+        driver_lat REAL,
+        driver_lng REAL,
         created_at TEXT,
         updated_at TEXT,
         FOREIGN KEY (item_id) REFERENCES items (id)
@@ -116,6 +152,7 @@ def init_db():
         role TEXT NOT NULL,
         district TEXT NOT NULL,
         phone TEXT NOT NULL,
+        password_hash TEXT,
         status TEXT DEFAULT 'ACTIVE',
         orders_count INTEGER DEFAULT 0,
         total_volume REAL DEFAULT 0.0,
@@ -169,10 +206,19 @@ def init_db():
     );
     """)
 
-    # Upgrade existing dispatches table with realtime tracking columns if missing
-    for col, col_type in [("current_step", "TEXT DEFAULT 'ORDER_PLACED'"), ("driver_lat", "REAL"), ("driver_lng", "REAL")]:
+    # Upgrade existing tables with newly added columns if missing
+    for tbl, col, col_type in [
+        ("users", "password_hash", "TEXT"),
+        ("dispatches", "current_step", "TEXT DEFAULT 'ORDER_PLACED'"),
+        ("dispatches", "driver_lat", "REAL"),
+        ("dispatches", "driver_lng", "REAL"),
+        ("dispatches", "delivery_address", "TEXT"),
+        ("dispatches", "delivery_district", "TEXT"),
+        ("dispatches", "driver_id", "TEXT"),
+        ("dispatches", "driver_vehicle", "TEXT"),
+    ]:
         try:
-            cursor.execute(f"ALTER TABLE dispatches ADD COLUMN {col} {col_type}")
+            cursor.execute(f"ALTER TABLE {tbl} ADD COLUMN {col} {col_type}")
         except sqlite3.OperationalError:
             pass
 
