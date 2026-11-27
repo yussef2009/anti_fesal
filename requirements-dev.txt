@@ -1,0 +1,4 @@
+# Dev-only dependencies — not installed on Vercel
+-r requirements.txt
+pytest>=8.0.0
+ddtrace>=2.0.0
