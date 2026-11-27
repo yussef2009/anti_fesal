@@ -1864,6 +1864,11 @@ textarea:focus-visible {
   color: var(--grade-emerald);
 }
 
+.status-dispatch_success {
+  background-color: var(--grade-blue-bg);
+  color: var(--grade-blue);
+}
+
 .status-pending,
 .status-on_delivery,
 .status-in_transit {
@@ -1871,8 +1876,33 @@ textarea:focus-visible {
   color: var(--grade-amber);
 }
 
+.status-off_duty {
+  background-color: var(--bg-subtle);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
+}
+
 .status-blocked,
-.status-rejected {
+.status-rejected,
+.status-dispatch_failed,
+.status-cancelled {
+  background-color: var(--crimson-light);
+  color: var(--crimson-primary);
+}
+
+[data-theme="dark"] .status-dispatch_success {
+  background-color: var(--grade-blue-bg);
+  color: var(--grade-blue);
+}
+
+[data-theme="dark"] .status-off_duty {
+  background-color: var(--bg-elevated);
+  color: var(--text-secondary);
+  border-color: var(--border-strong);
+}
+
+[data-theme="dark"] .status-dispatch_failed,
+[data-theme="dark"] .status-cancelled {
   background-color: var(--crimson-light);
   color: var(--crimson-primary);
 }
@@ -4478,6 +4508,9 @@ textarea:focus-visible {
 .toast.toast-success { border-inline-start-color: var(--grade-emerald); }
 .toast.toast-warning { border-inline-start-color: var(--grade-amber); }
 .toast.toast-error { border-inline-start-color: var(--crimson-primary); }
+.toast.toast-info { border-inline-start-color: var(--grade-blue); }
+
+[data-theme="dark"] .toast.toast-info { border-inline-start-color: var(--grade-blue); }
 
 .toast-icon {
   font-size: 18px;
