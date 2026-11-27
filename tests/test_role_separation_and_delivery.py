@@ -13,7 +13,7 @@ from config import ADMIN_ACCESS_PIN, CAPTAIN_ACCESS_PIN, IMAGES_DIR
 from backend.agents.marketing_autoreply import marketing_autoreply
 from backend.agents.visual_inspector import VisualInspectorAgent
 from backend.db_adapter import DatabaseAdapter, db
-from backend.main import ALLOWED_ORIGINS, app, serve_frontend_files
+from backend.main import ALLOWED_ORIGINS, _verify_session_token, app, serve_frontend_files
 
 client = TestClient(app)
 
@@ -485,4 +485,129 @@ def test_path_traversal_marketing_links_and_mongodb_branches():
     latest_app = mongo_adapter.get_application_by_user("U1")
     assert latest_app["id"] == "APP-2"
     mock_db.applications.find.return_value.sort.assert_called_with("created_at", -1)
+
+
+def test_live_role_resolution_after_kyc_approval():
+    admin_headers = _get_gate_headers("admin")
+    suffix = uuid.uuid4().hex[:8]
+
+    # 1. Register a fresh buyer and capture their original bearer token (claims role='buyer')
+    res_reg = client.post(
+        "/api/auth/register",
+        json={
+            "name": "بائع جديد بالإسكندرية",
+            "username": f"kyc_buyer_{suffix}",
+            "email": f"kyc_buyer_{suffix}@example.com",
+            "password": "StrongPassword!2026",
+            "role": "buyer",
+            "district": "Smouha",
+            "phone": "01077778888",
+        },
+    )
+    assert res_reg.status_code == 200, res_reg.text
+    reg_data = res_reg.json()
+    buyer_uid = reg_data["user"]["id"]
+    original_token = reg_data["token"]
+    assert _verify_session_token(original_token)["role"] == "buyer"
+    original_headers = {"Authorization": f"Bearer {original_token}"}
+
+    # Before KYC approval, buyer cannot call POST /api/intake (403)
+    intake_payload = {
+        "title": "غسالة ال جي اختبارية",
+        "description": "غسالة LG بحالة ممتازة استخدام بسيط في سموحة",
+        "district": "Smouha",
+        "seller_phone": "01077778888",
+        "seller_tier": "Everyday Seller",
+        "image_urls": ["default.jpg"],
+    }
+    res_intake_before = client.post("/api/intake", json=intake_payload, headers=original_headers)
+    assert res_intake_before.status_code == 403
+
+    # 2. Authenticated buyer applies to become a seller
+    res_apply = client.post(
+        "/api/applications/apply",
+        json={
+            "name": "بائع جديد بالإسكندرية",
+            "phone": "01077778888",
+            "role": "seller",
+            "district": "Smouha",
+            "application_data": {
+                "shop_name": "معرض سموحة",
+                "business_type": "individual",
+                "national_id": "29905051234567",
+                "tier": "Everyday Seller",
+                "payout_account": "01077778888",
+            },
+        },
+        headers=original_headers,
+    )
+    assert res_apply.status_code == 200, res_apply.text
+    app_id = res_apply.json()["id"]
+    assert res_apply.json()["user_id"] == buyer_uid
+
+    # While pending approval, my-status must not issue a refreshed token
+    res_pending_status = client.get("/api/applications/my-status", headers=original_headers)
+    assert res_pending_status.status_code == 200, res_pending_status.text
+    assert res_pending_status.json()["application"]["status"] == "PENDING_APPROVAL"
+    assert "token" not in res_pending_status.json()
+
+    # 3. Admin approves the seller application
+    res_approve = client.post(
+        f"/api/admin/applications/{app_id}/review",
+        json={"action": "APPROVED", "notes": "اعتماد فوري للبائع"},
+        headers=admin_headers,
+    )
+    assert res_approve.status_code == 200, res_approve.text
+    assert db.get_user_by_id(buyer_uid)["role"] == "seller"
+
+    # 4. Buyer can IMMEDIATELY call POST /api/intake using their ORIGINAL bearer token (no 403)
+    res_intake_after = client.post("/api/intake", json=intake_payload, headers=original_headers)
+    assert res_intake_after.status_code == 200, res_intake_after.text
+    created_item_id = res_intake_after.json()["item_id"]
+    assert db.get_item_by_id(created_item_id)["seller_id"] == buyer_uid
+
+    # 5. Authenticated GET /api/applications/my-status returns a refreshed seller token;
+    #    unauthenticated caller does not receive a token
+    res_anon_status = client.get(f"/api/applications/my-status?user_id={buyer_uid}")
+    assert res_anon_status.status_code == 200, res_anon_status.text
+    assert "token" not in res_anon_status.json()
+
+    res_auth_status = client.get(f"/api/applications/my-status?user_id={buyer_uid}", headers=original_headers)
+    assert res_auth_status.status_code == 200, res_auth_status.text
+    status_payload = res_auth_status.json()
+    assert status_payload["has_application"] is True
+    assert status_payload["application"]["status"] == "APPROVED"
+    assert status_payload.get("token")
+    refreshed_claims = _verify_session_token(status_payload["token"])
+    assert refreshed_claims["user_id"] == buyer_uid
+    assert refreshed_claims["role"] == "seller"
+
+    # 6. Admin blocking the user immediately rejects existing session tokens with 403
+    res_block = client.post(
+        f"/api/admin/users/{buyer_uid}/status",
+        json={"status": "BLOCKED"},
+        headers=admin_headers,
+    )
+    assert res_block.status_code == 200, res_block.text
+    assert client.post("/api/intake", json=intake_payload, headers=original_headers).status_code == 403
+    assert (
+        client.post(
+            "/api/intake",
+            json=intake_payload,
+            headers={"Authorization": f"Bearer {status_payload['token']}"},
+        ).status_code
+        == 403
+    )
+
+    # 7. Scoped gate tokens continue to use their gate role directly
+    captain_headers = _get_gate_headers("captain")
+    assert client.get("/api/admin/analytics", headers=admin_headers).status_code == 200
+    assert (
+        client.post(
+            "/api/driver/location",
+            json={"driver_id": "DRV-101", "lat": 31.225, "lng": 29.955, "sharing_enabled": True},
+            headers=captain_headers,
+        ).status_code
+        == 200
+    )
 

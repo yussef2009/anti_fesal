@@ -220,7 +220,20 @@ def get_current_user_role(
 
         # 2-part token -> our HMAC-SHA256 session token
         if token.count(".") == 1:
-            return _verify_session_token(token)
+            session_user = _verify_session_token(token)
+            user_id = session_user.get("user_id", "")
+            if user_id and not user_id.startswith("gate_"):
+                live_user = db.get_user_by_id(user_id)
+                if live_user:
+                    if str(live_user.get("status") or "").strip().upper() == "BLOCKED":
+                        raise HTTPException(
+                            status_code=403,
+                            detail="تم حظر هذا الحساب لمخالفة معايير الأمان وعدم الالتزام بالسعر القطعي.",
+                        )
+                    live_role = str(live_user.get("role") or session_user["role"]).strip().lower()
+                    if live_role in VALID_ROLES:
+                        session_user["role"] = live_role
+            return session_user
 
         # 3-part token -> Clerk JWT if configured
         if HAS_CLERK and token.count(".") == 2:
@@ -915,7 +928,23 @@ def get_my_application_status(
     app_rec = db.get_application_by_user(actual_user_id)
     if not app_rec:
         return {"has_application": False}
-    return {"has_application": True, "application": app_rec}
+
+    response: Dict[str, Any] = {"has_application": True, "application": app_rec}
+    if (
+        app_rec.get("status") == "APPROVED"
+        and user.get("authenticated")
+        and user.get("user_id") == actual_user_id
+        and not actual_user_id.startswith("gate_")
+    ):
+        approved_role = str(app_rec.get("role") or user.get("role") or "buyer").strip().lower()
+        if approved_role in VALID_ROLES:
+            live_user = db.get_user_by_id(actual_user_id)
+            response["token"] = _create_session_token(
+                user_id=actual_user_id,
+                role=approved_role,
+                username=(live_user or {}).get("username", ""),
+            )
+    return response
 
 
 @app.get("/api/admin/applications")
