@@ -1,1 +1,3 @@
 timestamp,item_id,original_grade,corrected_grade,original_price,corrected_price,merchant_notes,reviewer_id
+2026-11-27T11:08:35.604378,AF-121DAC,A,A,14500.0,10000.0,Merchant override,gate_admin
+2026-11-27T11:53:21.972592,AF-7909BF,A,A,14500.0,10000.0,Merchant override,gate_admin

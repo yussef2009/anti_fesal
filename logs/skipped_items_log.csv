@@ -79,3 +79,13 @@ timestamp,item_id,title,category,quoted_price,reason
 2026-11-20T18:19:22.404648,REL-CORRUPT-03,Corrupt Negative Price Item,Appliances,-500.0,Invalid quoted price (-500.0 <= 0 EGP)
 2026-11-20T18:19:22.405192,REL-CORRUPT-04,Corrupt Zero Price Item,Furniture,0.0,Invalid quoted price (0.0 <= 0 EGP)
 2026-11-20T18:19:22.409189,REL-CORRUPT-05,Corrupt Severe Malformed Item,,-1200.0,Empty category specification
+2026-11-27T11:08:33.603927,REL-CORRUPT-01,Corrupt Empty Category Item,,15000.0,Empty category specification
+2026-11-27T11:08:33.603927,REL-CORRUPT-02,Corrupt Missing Image Item,Electronics,24500.0,Missing product photo/image
+2026-11-27T11:08:33.603927,REL-CORRUPT-03,Corrupt Negative Price Item,Appliances,-500.0,Invalid quoted price (-500.0 <= 0 EGP)
+2026-11-27T11:08:33.603927,REL-CORRUPT-04,Corrupt Zero Price Item,Furniture,0.0,Invalid quoted price (0.0 <= 0 EGP)
+2026-11-27T11:08:33.603927,REL-CORRUPT-05,Corrupt Severe Malformed Item,,-1200.0,Empty category specification
+2026-11-27T11:53:20.663724,REL-CORRUPT-01,Corrupt Empty Category Item,,15000.0,Empty category specification
+2026-11-27T11:53:20.664769,REL-CORRUPT-02,Corrupt Missing Image Item,Electronics,24500.0,Missing product photo/image
+2026-11-27T11:53:20.664769,REL-CORRUPT-03,Corrupt Negative Price Item,Appliances,-500.0,Invalid quoted price (-500.0 <= 0 EGP)
+2026-11-27T11:53:20.664769,REL-CORRUPT-04,Corrupt Zero Price Item,Furniture,0.0,Invalid quoted price (0.0 <= 0 EGP)
+2026-11-27T11:53:20.665736,REL-CORRUPT-05,Corrupt Severe Malformed Item,,-1200.0,Empty category specification

@@ -1,6 +1,6 @@
 # Anti-Fesal (آنتي فصال) — Alexandria Daily Verified Catalog
 > Official Slogan: **"سعّر، بيع، ومن غير وجع فصال"**
-> Generated: `2026-11-20 18:19 UTC` | Total Examined: `100` | Valid: `95` | Corrupt Skipped: `5`
+> Generated: `2026-11-27 11:53 UTC` | Total Examined: `100` | Valid: `95` | Corrupt Skipped: `5`
 
 ---
 ## 🏷️ Verified Secondhand Listings (Fixed Price • No Fesal)
