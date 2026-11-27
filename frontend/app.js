@@ -80,6 +80,7 @@ const state = {
   activeDispatchId: null,
   pendingConfirmAction: null,
   pendingViewAfterAuth: null,
+  pendingMatrixPrefill: null,
   lastFocusedElement: null
 };
 
@@ -1907,6 +1908,9 @@ function closeModal(modalId) {
   if (modalId === 'modalConfirm') {
     state.pendingConfirmAction = null;
   }
+  if (modalId === 'modalSellerApply' || (modalId === 'modalAuth' && (!state.currentUser || !state.authToken))) {
+    state.pendingViewAfterAuth = null;
+  }
 
   // Clear #item- or #reserve? hash without triggering hashchange re-fetch loops
   if (modalId === 'modalProductDetail' && window.location.hash.startsWith('#item-')) {
@@ -1978,8 +1982,10 @@ function initModalAccessibility() {
     if (
       chatPanel &&
       chatPanel.classList.contains('active') &&
+      chatPanel.dataset.opening !== '1' &&
       chatContainer &&
-      !chatContainer.contains(e.target)
+      !chatContainer.contains(e.target) &&
+      !(e.target && e.target.closest && e.target.closest('[data-action="compare-item"], [data-action="toggle-chatbot"]'))
     ) {
       toggleCompareChatbot(false);
     }
@@ -1994,9 +2000,12 @@ function initDelegatedActions() {
     if (actionEl) {
       const action = actionEl.dataset.action;
 
-      // Stop card click propagation for nested card buttons
-      if (['toggle-favorite', 'open-reserve', 'open-ask-bot'].includes(action)) {
+      // Stop card click propagation for nested card buttons and chatbot triggers
+      if (['toggle-favorite', 'open-reserve', 'open-ask-bot', 'compare-item', 'toggle-chatbot'].includes(action)) {
         e.stopPropagation();
+        if (action === 'compare-item' || action === 'toggle-chatbot') {
+          e.stopImmediatePropagation();
+        }
       }
 
       switch (action) {
@@ -2073,7 +2082,7 @@ function initDelegatedActions() {
           setPdpGalleryIndex(Number(actionEl.dataset.index || 0));
           return;
         case 'compare-item':
-          handleCompareActiveDetailItem();
+          handleCompareActiveDetailItem(e);
           return;
         case 'accept-quote':
           handleAcceptQuote(actionEl);
@@ -2176,7 +2185,9 @@ function initDelegatedActions() {
           handleToggleUserStatus(actionEl.dataset.id, actionEl.dataset.status);
           return;
         case 'toggle-driver-status':
-          if (actionEl.dataset.id) toggleDriverStatus(actionEl.dataset.id, actionEl.dataset.status, actionEl);
+          if (actionEl.dataset.id) {
+            toggleDriverStatus(actionEl.dataset.id, actionEl.dataset.status, actionEl, actionEl.dataset.nextStatus);
+          }
           return;
         case 'show-delivery-details':
           showToast(
@@ -3154,7 +3165,10 @@ async function renderPdpBenchmark(item) {
   }
 }
 
-function handleCompareActiveDetailItem() {
+function handleCompareActiveDetailItem(e = null) {
+  if (e && typeof e.stopPropagation === 'function') {
+    e.stopPropagation();
+  }
   const item = state.activeDetailItem;
   if (!item) return;
   closeModal('modalProductDetail');
@@ -3267,6 +3281,14 @@ function prefillSellerStudio() {
   }
   if (tierEl && state.selectedSellerTier) {
     tierEl.value = state.selectedSellerTier;
+  }
+  if (state.pendingMatrixPrefill) {
+    const { category, model } = state.pendingMatrixPrefill;
+    const catInput = document.getElementById('sellerCategory');
+    const titleInput = document.getElementById('sellerTitle');
+    if (catInput && category) catInput.value = category;
+    if (titleInput && model) titleInput.value = model;
+    state.pendingMatrixPrefill = null;
   }
 }
 
@@ -4090,10 +4112,6 @@ function prefillSellerFromMatrix(category, model) {
     return;
   }
   switchPortalView('seller');
-  const catInput = document.getElementById('sellerCategory');
-  const titleInput = document.getElementById('sellerTitle');
-  if (catInput && category) catInput.value = category;
-  if (titleInput && model) titleInput.value = model;
   showToast(
     isAr() ? 'تم اختيار الموديل' : 'Model Selected',
     isAr() ? `تم تعبئة ${model} في نموذج التسعير` : `Prefilled ${model} in AI Appraisal Studio`,
@@ -4509,6 +4527,17 @@ function refreshLiveTrackingMap() {
 }
 
 // ==================== AUTH, SESSION & PORTAL GATES ====================
+function getRoleDisplayLabel(role) {
+  const roleNames = {
+    buyer: isAr() ? 'مشتري معتمد' : 'Verified Buyer',
+    seller: isAr() ? 'بائع معتمد' : 'Verified Seller',
+    merchant: isAr() ? 'تاجر شريك' : 'Partner Merchant',
+    driver: isAr() ? 'كابتن توصيل' : 'Delivery Captain',
+    admin: isAr() ? 'مشرف عام' : 'Super Admin'
+  };
+  return roleNames[role] || role || 'buyer';
+}
+
 function updateHeaderUserDisplay() {
   const avatarEl = document.getElementById('headerAvatarMini');
   const labelEl = document.getElementById('txtHeaderAccountLabel');
@@ -4518,13 +4547,34 @@ function updateHeaderUserDisplay() {
     const name = String(state.currentUser.name || 'User').trim();
     const initials = state.currentUser.avatar || name.slice(0, 2).toUpperCase();
     const firstName = name.split(/\s+/)[0];
+    const roleLabel = getRoleDisplayLabel(state.currentUser.role);
     if (avatarEl) avatarEl.textContent = initials;
     if (labelEl) labelEl.textContent = firstName;
-    if (btnAcc) btnAcc.title = isAr() ? `حساب: ${name}` : `Account: ${name}`;
+    if (btnAcc) btnAcc.title = isAr() ? `حساب: ${name} (${roleLabel})` : `Account: ${name} (${roleLabel})`;
   } else {
     if (avatarEl) avatarEl.textContent = '👤';
     if (labelEl) labelEl.textContent = tKey('signInLabel');
     if (btnAcc) btnAcc.title = tKey('signInLabel');
+  }
+}
+
+function syncUserRoleUi() {
+  updateHeaderUserDisplay();
+  const role = state.currentUser?.role;
+  const accRoleBadge = document.getElementById('accRoleBadge');
+  if (accRoleBadge) {
+    if (state.currentUser && state.authToken) {
+      accRoleBadge.textContent = getRoleDisplayLabel(role);
+    } else {
+      accRoleBadge.textContent = tKey('account.guestBadge');
+    }
+  }
+  const navDelivery = document.getElementById('navAccDelivery');
+  if (navDelivery) {
+    navDelivery.classList.toggle('is-hidden', !(state.currentUser && state.authToken && role === 'driver'));
+  }
+  if (state.currentAccountTab === 'delivery' && role !== 'driver') {
+    switchAccountTab('info');
   }
 }
 
@@ -5375,8 +5425,25 @@ async function loadAdminDrivers() {
     const drivers = Array.isArray(res.drivers) ? res.drivers : [];
     tbody.innerHTML = drivers
       .map((d) => {
-        const isFree = d.status === 'FREE';
+        const statusNorm = String(d.status || 'FREE').toUpperCase();
+        const statusLabel =
+          statusNorm === 'FREE'
+            ? (isAr() ? '🟢 متاح' : '🟢 Free')
+            : statusNorm === 'OFF_DUTY'
+              ? (isAr() ? '⏸️ في استراحة' : '⏸️ Off Duty')
+              : (isAr() ? '🚚 في مهمة' : '🚚 On Delivery');
         const safeId = escapeHTML(d.id);
+        const actionTargets = [
+          { status: 'FREE', label: isAr() ? 'إتاحة الكابتن' : 'Set Free' },
+          { status: 'ON_DELIVERY', label: isAr() ? 'تعيين مهمة' : 'Assign Trip' },
+          { status: 'OFF_DUTY', label: isAr() ? 'في استراحة' : 'Set Off Duty' }
+        ].filter((opt) => opt.status !== statusNorm);
+        const actionButtonsHtml = actionTargets
+          .map(
+            (opt) =>
+              `<button type="button" class="btn-quick-prompt" data-action="toggle-driver-status" data-id="${safeId}" data-status="${escapeHTML(statusNorm)}" data-next-status="${opt.status}">${escapeHTML(opt.label)}</button>`
+          )
+          .join('');
         return `
           <tr>
             <td><strong class="mono-num">#${safeId}</strong></td>
@@ -5387,14 +5454,12 @@ async function loadAdminDrivers() {
             <td class="tabular-num">⭐ ${formatNum(d.rating ?? 4.9)}</td>
             <td class="tabular-num"><strong>${formatNum(d.completed_trips ?? 0)}</strong></td>
             <td>
-              <span class="status-pill status-${escapeHTML(String(d.status || 'FREE').toLowerCase())}">
-                ${escapeHTML(isFree ? (isAr() ? '🟢 متاح' : '🟢 Free') : (isAr() ? '🚚 في مهمة' : '🚚 On Delivery'))}
+              <span class="status-pill status-${escapeHTML(statusNorm.toLowerCase())}">
+                ${escapeHTML(statusLabel)}
               </span>
             </td>
             <td>
-              <button type="button" class="btn-quick-prompt" data-action="toggle-driver-status" data-id="${safeId}" data-status="${escapeHTML(d.status || 'FREE')}">
-                ${escapeHTML(isFree ? (isAr() ? 'تعيين مهمة' : 'Assign Trip') : (isAr() ? 'إتاحة الكابتن' : 'Set Free'))}
-              </button>
+              <div class="table-actions">${actionButtonsHtml}</div>
             </td>
           </tr>`;
       })
@@ -5405,8 +5470,10 @@ async function loadAdminDrivers() {
   }
 }
 
-async function toggleDriverStatus(driverId, currentStatus, btnEl) {
-  const newStatus = currentStatus === 'FREE' ? 'ON_DELIVERY' : 'FREE';
+async function toggleDriverStatus(driverId, currentStatus, btnEl, nextStatusOverride = '') {
+  const cur = String(currentStatus || 'FREE').toUpperCase();
+  const nextCycle = { FREE: 'ON_DELIVERY', ON_DELIVERY: 'OFF_DUTY', OFF_DUTY: 'FREE' };
+  const newStatus = nextStatusOverride || nextCycle[cur] || 'FREE';
   const restore = setButtonLoading(btnEl, isAr() ? 'جاري التحديث...' : 'Updating...');
   try {
     await apiRequest(`/api/admin/drivers/${encodeURIComponent(driverId)}/status`, {
@@ -5494,18 +5561,10 @@ async function loadAccountData() {
 
   const user = state.currentUser;
   const initials = user.avatar || String(user.name || 'AF').trim().slice(0, 2).toUpperCase();
-  const roleNames = {
-    buyer: isAr() ? 'مشتري معتمد' : 'Verified Buyer',
-    seller: isAr() ? 'بائع معتمد' : 'Verified Seller',
-    merchant: isAr() ? 'تاجر شريك' : 'Partner Merchant',
-    driver: isAr() ? 'كابتن توصيل' : 'Delivery Captain',
-    admin: isAr() ? 'مشرف عام' : 'Super Admin'
-  };
 
   document.getElementById('accAvatar').textContent = initials;
   document.getElementById('accProfileName').textContent = user.name || '—';
   document.getElementById('accProfileUsername').textContent = `@${user.username || (user.email ? user.email.split('@')[0] : 'member')}`;
-  document.getElementById('accRoleBadge').textContent = roleNames[user.role] || user.role || 'buyer';
   document.getElementById('accDistrict').textContent = translateDistrict(user.district);
   document.getElementById('accEmail').textContent = user.email || '—';
   document.getElementById('accPhone').textContent = user.phone || '—';
@@ -5517,15 +5576,7 @@ async function loadAccountData() {
   document.getElementById('accDetailStatus').textContent =
     user.status === 'BLOCKED' ? (isAr() ? 'محظور' : 'Blocked') : (isAr() ? '✓ موثق ونشط' : '✓ Verified & Active');
 
-  // Show Delivery subtab ONLY for driver role
-  const navDelivery = document.getElementById('navAccDelivery');
-  if (navDelivery) {
-    if (user.role === 'driver') showEl(navDelivery);
-    else hideEl(navDelivery);
-  }
-  if (state.currentAccountTab === 'delivery' && user.role !== 'driver') {
-    switchAccountTab('info');
-  }
+  syncUserRoleUi();
 
   // Prefill settings form
   const setName = document.getElementById('accSettingFullName');
@@ -5541,7 +5592,8 @@ async function loadAccountData() {
   if (setTheme) setTheme.value = state.theme;
   if (setNotify) setNotify.value = user.notify || localStorage.getItem(STORAGE_KEYS.notify) || 'sms_whatsapp';
 
-  checkUserApplicationStatus();
+  await checkUserApplicationStatus();
+  syncUserRoleUi();
 
   let sellerItems = [];
   let buyerDeals = [];
@@ -5573,7 +5625,7 @@ async function loadAccountData() {
   renderAccountSellerSection(sellerItems);
   renderAccountBuyerSection(buyerDeals);
   renderAccountFavorites();
-  if (user.role === 'driver') {
+  if (state.currentUser?.role === 'driver') {
     renderAccountDeliverySection(deliveryTasks);
   }
 }
@@ -5975,7 +6027,10 @@ function openDriverApplyModal() {
     const distIn = document.getElementById('driverApplyDistrict');
     if (nameIn && state.currentUser.name) nameIn.value = state.currentUser.name;
     if (phoneIn && state.currentUser.phone) phoneIn.value = state.currentUser.phone;
-    if (distIn && state.currentUser.district) distIn.value = state.currentUser.district;
+    if (distIn && state.currentUser.district) {
+      const hasOption = Array.from(distIn.options).some((opt) => opt.value === state.currentUser.district);
+      if (hasOption) distIn.value = state.currentUser.district;
+    }
   }
   openModal('modalDriverApply');
 }
@@ -6166,10 +6221,20 @@ async function checkUserApplicationStatus() {
           d.className = 'kyc-prog-dot done';
         });
       }
-      if (state.currentUser && state.currentUser.role === 'buyer' && app.role) {
-        state.currentUser.role = app.role;
-        state.currentRole = app.role;
-        localStorage.setItem(STORAGE_KEYS.user, JSON.stringify(state.currentUser));
+      if (state.currentUser) {
+        if (res.token) {
+          state.authToken = res.token;
+          localStorage.setItem(STORAGE_KEYS.token, state.authToken);
+        }
+        if (
+          app.role &&
+          (state.currentUser.role === 'buyer' || !['admin', 'merchant'].includes(state.currentUser.role))
+        ) {
+          state.currentUser.role = app.role;
+          state.currentRole = app.role;
+          localStorage.setItem(STORAGE_KEYS.user, JSON.stringify(state.currentUser));
+        }
+        syncUserRoleUi();
       }
     } else {
       banner.className = 'account-status-banner rejected';
@@ -6203,6 +6268,14 @@ function toggleCompareChatbot(forceState = null) {
   const btn = document.getElementById('floatingChatbotBtn');
   if (!panel) return;
   const shouldOpen = forceState === null ? !panel.classList.contains('active') : Boolean(forceState);
+  if (shouldOpen) {
+    panel.dataset.opening = '1';
+    setTimeout(() => {
+      delete panel.dataset.opening;
+    }, 0);
+  } else {
+    delete panel.dataset.opening;
+  }
   panel.classList.toggle('active', shouldOpen);
   if (btn) btn.setAttribute('aria-expanded', shouldOpen ? 'true' : 'false');
   if (shouldOpen) {
@@ -6378,8 +6451,7 @@ function initFormBindings() {
           item_id: itemId,
           buyer_id: state.currentUser?.id || phone,
           delivery_address: deliveryAddress,
-          delivery_district: district,
-          pickup_address: deliveryAddress
+          delivery_district: district
         })
       });
 
