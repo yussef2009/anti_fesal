@@ -261,10 +261,10 @@ python tests/check_credentials.py
 
 ### Unified Full-Stack Deployment on Vercel (Recommended)
 - Deploy directly from the **repository root (`.`)** — do **not** set Vercel's Root Directory to `frontend/`.
-- `vercel.json` at the repo root wires both layers in one deployment:
-  - `/api/(.*)` and `/images/(.*)` -> `/api/index.py` (FastAPI serverless function)
-  - `/docs`, `/openapi.json`, and `/redoc` -> `/api/index.py` (production Swagger UI & OpenAPI spec)
-  - `/` and `/(.*)` -> `/frontend/index.html` and `/frontend/$1` (static showroom, CSS, JS, `manifest.json`, `sw.js`, icons)
+- `pyproject.toml` (`[tool.vercel] entrypoint = "api.index:app"`) and `vercel.json` at the repo root deploy the unified FastAPI application (`api/index.py` -> `backend/main.py`), which serves:
+  - `/api/*` and `/images/*` (FastAPI endpoints & local fallback storage)
+  - `/docs`, `/openapi.json`, and `/redoc` (production Swagger UI & OpenAPI spec)
+  - `/` and static frontend assets from `frontend/` (`index.html`, `styles.css`, `app.js`, `manifest.json`, `sw.js`, icons)
 - Set production secrets (`AUTH_ENFORCE=1`, `SESSION_SECRET`, `ADMIN_ACCESS_PIN`, `CAPTAIN_ACCESS_PIN`, `GEMINI_API_KEY`, `GEMINI_MODEL`, `MONGODB_URI`, `APPWRITE_*`, `CLERK_*`, `DD_*`, `CUSTOM_DOMAIN`) in Vercel Project Environment Variables without committing `.env`.
 - Note: Vercel's local filesystem is ephemeral (`/tmp`), so configure **MongoDB Atlas (`MONGODB_URI`)** and **Appwrite Cloud Storage (`APPWRITE_*`)** for persistent production storage.
 

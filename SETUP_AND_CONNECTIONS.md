@@ -136,7 +136,7 @@ CAPTAIN_ACCESS_PIN=replace_with_strong_captain_pin
 - **Deploy Full-Stack App to Vercel (Unified Frontend + FastAPI Serverless):**
   1. Push your code to your GitHub repository.
   2. Import the repository into Vercel and **keep Root Directory set to `.` (repository root)** — do **not** change Root Directory to `frontend`!
-     - Keeping the repository root allows `vercel.json` to serve `/frontend/*` (`/` -> `/frontend/index.html`, `/(.*)` -> `/frontend/$1`) **and** route `/api/(.*)`, `/images/(.*)`, `/docs`, `/openapi.json`, and `/redoc` directly to `/api/index.py`.
+     - Keeping the repository root allows Vercel's Python/FastAPI runtime (`pyproject.toml` -> `api.index:app`) to serve the frontend (`frontend/*`) as well as `/api/*`, `/images/*`, `/docs`, `/openapi.json`, and `/redoc` through the unified FastAPI app without path-breaking rewrites.
   3. Under Project Settings -> **Environment Variables**, add your production values (`AUTH_ENFORCE=1`, `SESSION_SECRET`, `ADMIN_ACCESS_PIN`, `CAPTAIN_ACCESS_PIN`, `GEMINI_API_KEY`, `GEMINI_MODEL=gemini-1.5-flash`, `MONGODB_URI`, `APPWRITE_*`, `CLERK_*`, `DD_*`, `CUSTOM_DOMAIN`).
      - *Persistence Note:* On Vercel serverless functions, the local filesystem is ephemeral (`/tmp`), so configure **MongoDB Atlas (`MONGODB_URI`)** and **Appwrite Storage (`APPWRITE_*`)** for persistent production database records and uploaded images.
   4. Under Project Settings -> **Domains**, add `anti-fesal.me` or `www.anti-fesal.me`.
